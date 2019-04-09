@@ -41,12 +41,8 @@ function Peds.EnterVehicle(ped, vehicle, seatNumber)
     )
 end
 
-function Peds.IsPedInVehicleOrDead(ped, position)
-    return GetVehiclePedIsIn(ped, false) or IsPedDeadOrDying(ped, 1)
-end
-
-function Peds.IsPedInVehicleDeadOrTooFarAway(ped, position)
-    if IsPedInAnyVehicle(ped, false) or IsPedDeadOrDying(ped, 1) then
+function Peds.IsPedInVehicleOrTooFarAway(ped, position)
+    if IsPedInAnyVehicle(ped, false) then
         return true
     end
 

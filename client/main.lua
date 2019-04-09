@@ -10,7 +10,7 @@ local playerData = {
     vehicle = nil,
     isInAmbulance = false,
     isAmbulanceDriveable = false,
-    isPlayerDead = false
+    isPlayerDead = false,
 }
 
 local gameData = {
@@ -19,7 +19,8 @@ local gameData = {
     peds = {}, -- {{model: model, coords: coords}}
     pedsInAmbulance = {}, -- {{model: model, coords: coords}}
     secondsLeft = 0,
-    hospitalLocation = {x = 0, y = 0, z = 0, spawnPoints = {}}
+    hospitalLocation = {x = 0, y = 0, z = 0, spawnPoints = {}},
+    lastVehicleHealth = 1000,
 }
 
 Citizen.CreateThread(function()
@@ -41,20 +42,44 @@ function mainLoop()
 
         if gameData.isPlaying then
             if not newPlayerData.isInAmbulance then
-                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_left_ambulance'))
+                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_failed'), _('terminate_left_ambulance'))
             elseif not newPlayerData.isAmbulanceDriveable then
-                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_destroyed_ambulance'))
+                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_failed'), _('terminate_destroyed_ambulance'))
             elseif newPlayerData.isPlayerDead then
-                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_you_died'))
+                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_failed'), _('terminate_you_died'))
+            elseif areAnyPatientsDead() then
+                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_failed'), _('terminate_patient_died'))
             end
+
+            handleAmbulanceDamageDetection()
         elseif not playerData.isInAmbulance and newPlayerData.isInAmbulance then
             ESX.ShowHelpNotification(_('start_game'))
         end
 
         playerData = newPlayerData
 
-        Citizen.Wait(1000)
+        Citizen.Wait(500)
     end
+end
+
+function areAnyPatientsDead()
+    for _, patient in pairs(gameData.peds) do
+        if IsPedDeadOrDying(patient, 1) then
+            return true
+        end
+    end
+
+    return false
+end
+
+function handleAmbulanceDamageDetection()
+    local vehicleHealth = GetVehicleBodyHealth(playerData.vehicle)
+
+    if vehicleHealth < gameData.lastVehicleHealth then
+        addTime(Config.LoseTimeForDamage(gameData.lastVehicleHealth - vehicleHealth))
+    end
+
+    gameData.lastVehicleHealth = vehicleHealth
 end
 
 function waitForControlLoop()
@@ -62,7 +87,7 @@ function waitForControlLoop()
         while true do
             if IsControlJustPressed(1, Config.ActivationKey) then
                 if gameData.isPlaying then
-                    TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_requested'))
+                    TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_failed'), _('terminate_requested'))
                     Citizen.Wait(5000)
                 elseif playerData.isInAmbulance then
                     TriggerEvent(START_GAME_EVENT)
@@ -97,8 +122,8 @@ function gatherData()
     return newPlayerData
 end
 
-AddEventHandler(TERMINATE_GAME_EVENT, function(reasonForTerminating)
-    ESX.ShowNotification(reasonForTerminating)
+AddEventHandler(TERMINATE_GAME_EVENT, function(typeOfFailure, reasonForTerminating)
+    Scaleform.ShowWasted(typeOfFailure, reasonForTerminating, 5)
 
     gameData.isPlaying = false
     Markers.StopMarkers()
@@ -113,10 +138,11 @@ end)
 AddEventHandler(START_GAME_EVENT, function()
     gameData.hospitalLocation = findNearestHospital(playerData.position)
     gameData.secondsLeft = Config.InitialSeconds
-    gameData.isPlaying = true
     gameData.level = 1
     gameData.peds = {}
     gameData.pedsInAmbulance = {}
+    gameData.lastVehicleHealth = GetVehicleBodyHealth(playerData.vehicle)
+    gameData.isPlaying = true
     
     ESX.ShowNotification(_('game_started'))
     Overlay.Start(ESX, gameData)
@@ -151,7 +177,7 @@ function startTimerThread()
             gameData.secondsLeft = gameData.secondsLeft - 1
 
             if gameData.secondsLeft <= 0 then
-                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_out_of_time'))
+                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_failed'), _('terminate_out_of_time'))
             end
 
             Overlay.Update(gameData)
@@ -166,13 +192,13 @@ function startGameLoop()
                 ESX.ShowNotification(_('return_to_hospital'))
             end
 
-            if getDistance(playerData.position, gameData.hospitalLocation) <= 5.0 and #gameData.pedsInAmbulance > 0 then
+            if getDistance(playerData.position, gameData.hospitalLocation) <= 10.0 and #gameData.pedsInAmbulance > 0 then
                 handlePatientDropOff()
             else
                 handlePatientPickUps()
             end
 
-            Citizen.Wait(1000)
+            Citizen.Wait(500)
         end
     end)
 end
@@ -183,14 +209,15 @@ function handlePatientDropOff()
     local numberDroppedOff = #gameData.pedsInAmbulance
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
     gameData.pedsInAmbulance = {}
-    gameData.secondsLeft = gameData.secondsLeft + Config.AdditionalTimeForDropOff(numberDroppedOff)
+    addTime(Config.AdditionalTimeForDropOff(numberDroppedOff))
+    updateMarkersAndBlips()
 
     if #gameData.peds == 0 then
         TriggerServerEvent(SERVER_EVENT, gameData.level)
         ESX.ShowNotification(_('end_level', gameData.level, Config.MoneyPerLevelFormula(gameData.level)))
 
         if gameData.level == Config.MaxLevels then
-            TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_finished'))
+            TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_won'), _('terminate_finished'))
         else
             gameData.level = gameData.level + 1
             setupLevel()
@@ -206,7 +233,7 @@ end
 
 function handlePatientPickUps()
     for index, ped in pairs(gameData.peds) do
-        if getDistance(playerData.position, ped.coords) <= 5.0 then
+        if getDistance(playerData.position, ped.coords) <= 10.0 then
             displayMessageAndWaitUntilStopped('stop_ambulance_pickup')
             handleLoading(ped, index)
             addTime(Config.AdditionalTimeForPickup(getDistance(gameData.hospitalPosition, ped.coords)))
@@ -219,7 +246,12 @@ end
 
 function addTime(timeToAdd)
     gameData.secondsLeft = gameData.secondsLeft + timeToAdd
-    ESX.ShowNotification(_('time_added', timeToAdd))
+
+    if timeToAdd > 0 then
+        ESX.ShowNotification(_('time_added', timeToAdd))
+    elseif timeToAdd < 0 then
+        ESX.ShowNotification(_('time_removed', timeToAdd))
+    end
 end
 
 function handleLoading(ped, index)
@@ -232,7 +264,7 @@ end
 
 function waitUntilPatientOnBus(ped)
     while gameData.isPlaying do
-        if Peds.IsPedInVehicleDeadOrTooFarAway(ped.model, ped.coords) then
+        if Peds.IsPedInVehicleOrTooFarAway(ped.model, ped.coords) then
             return
         end
         Citizen.Wait(50)
@@ -280,43 +312,8 @@ function updateMarkersAndBlips()
 
     Blips.UpdateBlips(coordsList)
     Markers.UpdateMarkers(coordsList)
-end
 
-Map = {}
-
-function Map.filter(array, func)
-    local returnTable = {};
-
-    for index, v in pairs(array) do
-        if func(v, index) then
-            table.insert(returnTable, v)
-        end
-    end
-
-    return returnTable
-end
-
-function Map.map(array, func)
-    local returnTable = {};
-
-    for _, v in pairs(array) do
-        table.insert(returnTable, func(v))
-    end
-    
-    return returnTable
-end
-
-function Map.forEach(array, func)
-    for index, value in pairs(array) do
-        func(value, index)
-    end
-end
-
-function Map.shuffle(array)
-    for i = #array, 2, -1 do
-        local j = math.random(i)
-        array[i], array[j] = array[j], array[i]
-    end
-
-    return array
+    local isAnyoneInAmbulance = #gameData.pedsInAmbulance > 0
+    Blips.SetFlashHospital(isAnyoneInAmbulance)
+    Markers.SetShowHospital(isAnyoneInAmbulance)
 end

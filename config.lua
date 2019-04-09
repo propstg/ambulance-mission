@@ -11,6 +11,7 @@ Config.MaxLevels = 5
 Config.AdditionalTimeForDropOff = function(numberPeds) return 10 * numberPeds end
 Config.MoneyPerLevelFormula = function(level) return 100 * level * level end
 Config.AdditionalTimeForPickup = function(distanceFromHospital) return math.floor(distanceFromHospital / 40) end
+Config.LoseTimeForDamage = function(damage) return math.floor(damage / 5) end
 Config.OverlayBaseCoords = {x = 5.0, y = 5.0}
 
 Config.Hospitals = {

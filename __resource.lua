@@ -13,12 +13,13 @@ client_scripts {
     '@es_extended/locale.lua',
     'config.lua',
     'locales/en.lua',
-    'client/map.js',
+    'client/map.lua',
     'client/log.lua',
     'client/blips.lua',
     'client/markers.lua',
     'client/peds.lua',
     'client/overlay.lua',
+    'client/scaleform.lua',
     'client/main.lua'
 }
 

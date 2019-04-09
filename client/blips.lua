@@ -24,12 +24,15 @@ function Blips.removeAllPatients()
     end)
 end
 
+function Blips.SetFlashHospital(flashHospital)
+    SetBlipFlashes(Blips.hospitalBlip, flashHospital)
+end
+
 function Blips.CreateAndInitBlip(coords, blipLabel, isFlashing, sprite)
     local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
     SetBlipSprite(blip, sprite)
     SetBlipAsShortRange(blip, true)
     SetBlipFlashes(blip, isFlashing)
-    SetBlipPriority(blip, 1)
     BeginTextCommandSetBlipName('STRING')
     AddTextComponentString(blipLabel)
     EndTextCommandSetBlipName(blip)
