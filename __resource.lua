@@ -1,0 +1,27 @@
+resource_manifest_version '44febabe-d386-4d18-afbe-5e627f4af937'
+
+description 'Blarglebottoms Ambulance Mission'
+
+server_scripts {
+    '@es_extended/locale.lua',
+    'config.lua',
+    'locales/en.js',
+    'server/main.lua'
+}
+
+client_scripts {
+    '@es_extended/locale.lua',
+    'config.lua',
+    'locales/en.js',
+    'client/map.js',
+    'client/log.lua',
+    'client/blips.lua',
+    'client/markers.lua',
+    'client/peds.lua',
+    'client/overlay.lua'
+    'client/main.lua'
+}
+
+dependencies {
+    'es_extended'
+}
