@@ -5,20 +5,20 @@ description 'Blarglebottoms Ambulance Mission'
 server_scripts {
     '@es_extended/locale.lua',
     'config.lua',
-    'locales/en.js',
+    'locales/en.lua',
     'server/main.lua'
 }
 
 client_scripts {
     '@es_extended/locale.lua',
     'config.lua',
-    'locales/en.js',
+    'locales/en.lua',
     'client/map.js',
     'client/log.lua',
     'client/blips.lua',
     'client/markers.lua',
     'client/peds.lua',
-    'client/overlay.lua'
+    'client/overlay.lua',
     'client/main.lua'
 }
 

@@ -14,7 +14,7 @@ function Peds.CreateRandomPedInArea(coords)
 
     return {
         model = ped,
-        coords = {x = x, y = y}
+        coords = {x = x, y = y, z = coords.z}
     }
 end
 
@@ -35,7 +35,7 @@ function Peds.EnterVehicle(ped, vehicle, seatNumber)
         vehicle, 
         Config.EnterVehicleTimeout, -- timeout
         seatNumber,                 -- seat
-        1.0,                        -- speed (walk)
+        2.0,                        -- speed (run)
         1,                          -- flag, normal
         0                           -- p6? lol
     )

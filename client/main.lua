@@ -19,7 +19,7 @@ local gameData = {
     peds = {}, -- {{model: model, coords: coords}}
     pedsInAmbulance = {}, -- {{model: model, coords: coords}}
     secondsLeft = 0,
-    hospitalLocation = {x = 0, y = 0, z = 0, spawnLocations = {}}
+    hospitalLocation = {x = 0, y = 0, z = 0, spawnPoints = {}}
 }
 
 Citizen.CreateThread(function()
@@ -62,15 +62,16 @@ function waitForControlLoop()
         while true do
             if IsControlJustPressed(1, Config.ActivationKey) then
                 if gameData.isPlaying then
-                    TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_requested')
+                    TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_requested'))
                     Citizen.Wait(5000)
                 elseif playerData.isInAmbulance then
                     TriggerEvent(START_GAME_EVENT)
+                    ESX.ShowHelpNotification('Press ~INPUT_CONTEXT~ to stop mission.')
                     Citizen.Wait(5000)
                 end
             end
 
-            Citizen.Wait(25)
+            Citizen.Wait(5)
         end
     end)
 end
@@ -101,6 +102,8 @@ AddEventHandler(TERMINATE_GAME_EVENT, function(reasonForTerminating)
 
     gameData.isPlaying = false
     Markers.StopMarkers()
+    Overlay.Stop()
+    Blips.StopBlips()
 
     Peds.DeletePeds(mapPedsToModel(gameData.peds))
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
@@ -112,10 +115,13 @@ AddEventHandler(START_GAME_EVENT, function()
     gameData.secondsLeft = Config.InitialSeconds
     gameData.isPlaying = true
     gameData.level = 1
-    gameData.pedsInAmbulance = 0
+    gameData.peds = {}
+    gameData.pedsInAmbulance = {}
     
     ESX.ShowNotification(_('game_started'))
+    Overlay.Start(ESX, gameData)
     Markers.StartMarkers(gameData.hospitalLocation)
+    Blips.StartBlips(gameData.hospitalLocation)
     setupLevel()
     startGameLoop()
     startTimerThread()
@@ -140,7 +146,7 @@ end
 
 function startTimerThread()
     Citizen.CreateThread(function()
-        while gameData.isPlaying then
+        while gameData.isPlaying do
             Citizen.Wait(1000)
             gameData.secondsLeft = gameData.secondsLeft - 1
 
@@ -158,7 +164,9 @@ function startGameLoop()
         while gameData.isPlaying do
             if #gameData.pedsInAmbulance >= Config.MaxPatientsPerTrip or #gameData.peds == 0 then
                 ESX.ShowNotification(_('return_to_hospital'))
-            elseif getDistance(playerData.position, gameData.hospitalLocation) <= 5.0 then
+            end
+
+            if getDistance(playerData.position, gameData.hospitalLocation) <= 5.0 and #gameData.pedsInAmbulance > 0 then
                 handlePatientDropOff()
             else
                 handlePatientPickUps()
@@ -179,10 +187,10 @@ function handlePatientDropOff()
 
     if #gameData.peds == 0 then
         TriggerServerEvent(SERVER_EVENT, gameData.level)
-        ESX.ShowNotification(_('end_level', gameData.level))
+        ESX.ShowNotification(_('end_level', gameData.level, Config.MoneyPerLevelFormula(gameData.level)))
 
         if gameData.level == Config.MaxLevels then
-            TriggerEvent(TERMINATE_GAME_EVENT, 'terminate_finished')
+            TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_finished'))
         else
             gameData.level = gameData.level + 1
             setupLevel()
@@ -201,7 +209,7 @@ function handlePatientPickUps()
         if getDistance(playerData.position, ped.coords) <= 5.0 then
             displayMessageAndWaitUntilStopped('stop_ambulance_pickup')
             handleLoading(ped, index)
-            addTime(Config.AdditionalTimeForPickup(getDistance(playerData.position, ped.coords)))
+            addTime(Config.AdditionalTimeForPickup(getDistance(gameData.hospitalPosition, ped.coords)))
             updateMarkersAndBlips()
             Overlay.Update(gameData)
             return
@@ -216,7 +224,7 @@ end
 
 function handleLoading(ped, index)
     local freeSeat = findFirstFreeSeat()
-    Peds.EnterVehicle(ped.model, gameData.vehicle, freeSeat)
+    Peds.EnterVehicle(ped.model, playerData.vehicle, freeSeat)
     table.insert(gameData.pedsInAmbulance, ped)
     waitUntilPatientOnBus(ped)
     table.remove(gameData.peds, index)
@@ -232,14 +240,16 @@ function waitUntilPatientOnBus(ped)
 end
 
 function setupLevel()
-    local locations = Map.shuffle(gameData.hospitalLocation.spawnLocations)
-    locations = Map.filter(locations, function(location, index)return index < level end)
-    Map.forEach(locations, function(location))
-        table.insert(gameData.peds, Peds.CreateRandomPedInArea(coords))
+    local locations = Map.shuffle(gameData.hospitalLocation.spawnPoints)
+    locations = Map.filter(locations, function(location, index) return index <= gameData.level end)
+
+    Map.forEach(locations, function(location)
+        table.insert(gameData.peds, Peds.CreateRandomPedInArea(location))
     end)
+
     updateMarkersAndBlips()
 
-    ESX.ShowNotification(_('start_level', level, level))
+    ESX.ShowNotification(_('start_level', gameData.level, gameData.level))
 end
 
 function getDistance(coords1, coords2)
@@ -255,7 +265,7 @@ end
 
 function findFirstFreeSeat()
     for i = 1, Config.MaxPatientsPerTrip do
-        if IsVehicleSeatFree(gameData.vehicle, i) then
+        if IsVehicleSeatFree(playerData.vehicle, i) then
             return i
         end
     end
@@ -270,4 +280,43 @@ function updateMarkersAndBlips()
 
     Blips.UpdateBlips(coordsList)
     Markers.UpdateMarkers(coordsList)
+end
+
+Map = {}
+
+function Map.filter(array, func)
+    local returnTable = {};
+
+    for index, v in pairs(array) do
+        if func(v, index) then
+            table.insert(returnTable, v)
+        end
+    end
+
+    return returnTable
+end
+
+function Map.map(array, func)
+    local returnTable = {};
+
+    for _, v in pairs(array) do
+        table.insert(returnTable, func(v))
+    end
+    
+    return returnTable
+end
+
+function Map.forEach(array, func)
+    for index, value in pairs(array) do
+        func(value, index)
+    end
+end
+
+function Map.shuffle(array)
+    for i = #array, 2, -1 do
+        local j = math.random(i)
+        array[i], array[j] = array[j], array[i]
+    end
+
+    return array
 end

@@ -1,23 +1,23 @@
 Config = {}
 Config.Locale = 'en'
-Config.DebugLog = false
+Config.DebugLog = true
 
-Config.ActivationKey = 97
-Config.ActivationKeyText = 'INPUT_VEH_CINEMATIC_DOWN_ONLY'
+Config.ActivationKey = 51
+Config.ActivationKeyText = 'INPUT_CONTEXT'
 
-Config.InitialSeconds = 120
+Config.InitialSeconds = 90
 Config.MaxPatientsPerTrip = 3
 Config.MaxLevels = 5
-Config.AdditionalTimeForDropOff = function(numberPeds) return 15 * numberPeds end
+Config.AdditionalTimeForDropOff = function(numberPeds) return 10 * numberPeds end
 Config.MoneyPerLevelFormula = function(level) return 100 * level * level end
-Config.AdditionalTimeForPickup = function(distanceFromHospital) return distanceFromHospital end
-Config.OverlayBaseCoords = {x = 50.0, y = 50.0}
+Config.AdditionalTimeForPickup = function(distanceFromHospital) return math.floor(distanceFromHospital / 40) end
+Config.OverlayBaseCoords = {x = 5.0, y = 5.0}
 
 Config.Hospitals = {
     { -- east los santos
-        x = 1155.226,
-        y = -1425.157,
-        z = 30.915,
+        x = 1152.081,
+        y = -1506.815,
+        z = 34.461,
         spawnPoints = {
             {x = 958.112, y = -1425.157, z = 30.915},   {x = 969.391, y = -1625.081, z = 29.791},   {x = 1278.963, y = -1543.797, z = 46.447},
             {x = 1396.469, y = -1619.400, z = 57.305},  {x = 1295.155, y = -1728.321, z = 53.479},  {x = 1017.461, y = -2068.399, z = 30.802},
@@ -27,7 +27,7 @@ Config.Hospitals = {
             {x = 985.299, y = -1016.927, z = 41.332},   {x = 721.840, y = -982.642, z = 23.430},    {x = 722.283, y = -744.715, z = 24.961},
             {x = 697.080, y = -393.864, z = 40.850},    {x = 1899.997, y = -1022.248, z = 75.572},  {x = 718.948, y = -289.384, z = 75.572},
             {x = 981.109, y = -224.136, z = 69.190},    {x = 917.351, y = 48.512, z = 80.048},      {x = 1117.835, -2373.443, 30.481},
-            {x = 1149.124, y = -982.065, z = 45.289}
+            {x = 1143.472, y = -983.311, z = 46.069}
         }
     },
 }
