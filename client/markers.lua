@@ -41,6 +41,7 @@ function Markers.drawPedMarker(coords)
     Markers.drawMarker(coords,
         22, -- MarkerTypeChevronUpx3
         180.0,
+        2.0,
         10.0,
         true
     )
@@ -50,18 +51,19 @@ function Markers.drawHospitalMarker(coords)
     Markers.drawMarker(coords,
         1, -- MarkerTypeVerticalCylinder
         0.0,
-        0.0,
+        Config.Markers.Size / 2.0,
+        -1.0,
         false
     )
 end
 
-function Markers.drawMarker(coords, type, yRot, zOffset, bobUpAndDown)
+function Markers.drawMarker(coords, type, yRot, scaleY, zOffset, bobUpAndDown)
     local markerSize = Config.Markers.Size / 2.0
 
     DrawMarker(type,        -- type
         coords.x,           -- posX
         coords.y,           -- posY
-        coords.z zOffset,   -- posZ
+        coords.z + zOffset, -- posZ
         0,                  -- dirX
         0,                  -- dirY
         0,                  -- dirZ
@@ -69,7 +71,7 @@ function Markers.drawMarker(coords, type, yRot, zOffset, bobUpAndDown)
         yRot,               -- rotY
         0.0,                -- rotZ
         markerSize,         -- scaleX
-        2.0,                -- scaleY
+        scaleY,             -- scaleY
         10.0,               -- scaleZ
         0,                  -- red
         0,                  -- green

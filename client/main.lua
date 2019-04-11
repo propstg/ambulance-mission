@@ -42,13 +42,13 @@ function mainLoop()
 
         if gameData.isPlaying then
             if not newPlayerData.isInAmbulance then
-                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_failed'), _('terminate_left_ambulance'))
+                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_left_ambulance'), true)
             elseif not newPlayerData.isAmbulanceDriveable then
-                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_failed'), _('terminate_destroyed_ambulance'))
+                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_destroyed_ambulance'), true)
             elseif newPlayerData.isPlayerDead then
-                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_failed'), _('terminate_you_died'))
+                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_you_died'), true)
             elseif areAnyPatientsDead() then
-                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_failed'), _('terminate_patient_died'))
+                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_patient_died'), true)
             end
 
             handleAmbulanceDamageDetection()
@@ -64,7 +64,7 @@ end
 
 function areAnyPatientsDead()
     for _, patient in pairs(gameData.peds) do
-        if IsPedDeadOrDying(patient, 1) then
+        if IsPedDeadOrDying(patient.model, 1) then
             return true
         end
     end
@@ -75,8 +75,8 @@ end
 function handleAmbulanceDamageDetection()
     local vehicleHealth = GetVehicleBodyHealth(playerData.vehicle)
 
-    if vehicleHealth < gameData.lastVehicleHealth then
-        addTime(Config.LoseTimeForDamage(gameData.lastVehicleHealth - vehicleHealth))
+    if #gameData.pedsInAmbulance > 0 and vehicleHealth < gameData.lastVehicleHealth then
+        addTime(Config.LoseTimeForDamage(vehicleHealth - gameData.lastVehicleHealth))
     end
 
     gameData.lastVehicleHealth = vehicleHealth
@@ -87,7 +87,7 @@ function waitForControlLoop()
         while true do
             if IsControlJustPressed(1, Config.ActivationKey) then
                 if gameData.isPlaying then
-                    TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_failed'), _('terminate_requested'))
+                    TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_requested'), true)
                     Citizen.Wait(5000)
                 elseif playerData.isInAmbulance then
                     TriggerEvent(START_GAME_EVENT)
@@ -122,8 +122,14 @@ function gatherData()
     return newPlayerData
 end
 
-AddEventHandler(TERMINATE_GAME_EVENT, function(typeOfFailure, reasonForTerminating)
-    Scaleform.ShowWasted(typeOfFailure, reasonForTerminating, 5)
+AddEventHandler(TERMINATE_GAME_EVENT, function(reasonForTerminating, failed)
+    if failed then
+        Scaleform.ShowWasted(_('terminate_failed'), reasonForTerminating, 5)
+        PlaySoundFrontend(-1, 'ScreenFlash', 'MissionFailedSounds', 1)
+    else
+        Scaleform.ShowPassed()
+        PlaySoundFrontend(-1, 'Mission_Pass_Notify', 'DLC_HEISTS_GENERAL_FRONTEND_SOUNDS', 1)
+    end
 
     gameData.isPlaying = false
     Markers.StopMarkers()
@@ -144,7 +150,6 @@ AddEventHandler(START_GAME_EVENT, function()
     gameData.lastVehicleHealth = GetVehicleBodyHealth(playerData.vehicle)
     gameData.isPlaying = true
     
-    ESX.ShowNotification(_('game_started'))
     Overlay.Start(ESX, gameData)
     Markers.StartMarkers(gameData.hospitalLocation)
     Blips.StartBlips(gameData.hospitalLocation)
@@ -177,7 +182,7 @@ function startTimerThread()
             gameData.secondsLeft = gameData.secondsLeft - 1
 
             if gameData.secondsLeft <= 0 then
-                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_failed'), _('terminate_out_of_time'))
+                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_out_of_time'), true)
             end
 
             Overlay.Update(gameData)
@@ -188,9 +193,6 @@ end
 function startGameLoop()
     Citizen.CreateThread(function()
         while gameData.isPlaying do
-            if #gameData.pedsInAmbulance >= Config.MaxPatientsPerTrip or #gameData.peds == 0 then
-                ESX.ShowNotification(_('return_to_hospital'))
-            end
 
             if getDistance(playerData.position, gameData.hospitalLocation) <= 10.0 and #gameData.pedsInAmbulance > 0 then
                 handlePatientDropOff()
@@ -209,15 +211,14 @@ function handlePatientDropOff()
     local numberDroppedOff = #gameData.pedsInAmbulance
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
     gameData.pedsInAmbulance = {}
-    addTime(Config.AdditionalTimeForDropOff(numberDroppedOff))
+    gameData.secondsLeft = Config.InitialSeconds
     updateMarkersAndBlips()
 
     if #gameData.peds == 0 then
         TriggerServerEvent(SERVER_EVENT, gameData.level)
-        ESX.ShowNotification(_('end_level', gameData.level, Config.MoneyPerLevelFormula(gameData.level)))
 
         if gameData.level == Config.MaxLevels then
-            TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_won'), _('terminate_finished'))
+            TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_finished'), false)
         else
             gameData.level = gameData.level + 1
             setupLevel()
@@ -239,6 +240,13 @@ function handlePatientPickUps()
             addTime(Config.AdditionalTimeForPickup(getDistance(gameData.hospitalPosition, ped.coords)))
             updateMarkersAndBlips()
             Overlay.Update(gameData)
+
+            if #gameData.pedsInAmbulance >= Config.MaxPatientsPerTrip then
+                Scaleform.ShowMessage(_('return_to_hospital_header'), _('return_to_hospital_sub_full'), 5)
+            elseif #gameData.peds == 0 then
+                Scaleform.ShowMessage(_('return_to_hospital_header'), _('return_to_hospital_sub_end_level'), 5)
+            end
+
             return
         end
     end
@@ -248,9 +256,11 @@ function addTime(timeToAdd)
     gameData.secondsLeft = gameData.secondsLeft + timeToAdd
 
     if timeToAdd > 0 then
-        ESX.ShowNotification(_('time_added', timeToAdd))
+        Scaleform.ShowAddTime(_('time_added', timeToAdd))
+        PlaySoundFrontend(-1, 'Hack_Success', 'DLC_HEIST_BIOLAB_PREP_HACKING_SOUNDS', true)
     elseif timeToAdd < 0 then
-        ESX.ShowNotification(_('time_removed', timeToAdd))
+        Scaleform.ShowRemoveTime(_('time_removed', timeToAdd))
+        PlaySoundFrontend(-1, 'Hack_Failed', 'DLC_HEIST_BIOLAB_PREP_HACKING_SOUNDS', true)
     end
 end
 
@@ -281,7 +291,13 @@ function setupLevel()
 
     updateMarkersAndBlips()
 
-    ESX.ShowNotification(_('start_level', gameData.level, gameData.level))
+    local subMessage = ''
+    if gameData.level == 1 then
+        subMessage = _('start_level_sub_one')
+    else
+        subMessage = _('start_level_sub_multi', gameData.level)
+    end
+    Scaleform.ShowMessage(_('start_level_header', gameData.level), subMessage, 5)
 end
 
 function getDistance(coords1, coords2)

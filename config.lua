@@ -5,13 +5,13 @@ Config.DebugLog = true
 Config.ActivationKey = 51
 Config.ActivationKeyText = 'INPUT_CONTEXT'
 
-Config.InitialSeconds = 90
+Config.InitialSeconds = 120
 Config.MaxPatientsPerTrip = 3
 Config.MaxLevels = 5
-Config.AdditionalTimeForDropOff = function(numberPeds) return 10 * numberPeds end
 Config.MoneyPerLevelFormula = function(level) return 100 * level * level end
-Config.AdditionalTimeForPickup = function(distanceFromHospital) return math.floor(distanceFromHospital / 40) end
-Config.LoseTimeForDamage = function(damage) return math.floor(damage / 5) end
+Config.AdditionalTimeForDropOff = function(numberPeds) return 30 * numberPeds end
+Config.AdditionalTimeForPickup = function(distanceFromHospital) return math.floor(distanceFromHospital / 25) end
+Config.LoseTimeForDamage = function(damage) return math.floor(damage) end
 Config.OverlayBaseCoords = {x = 5.0, y = 5.0}
 
 Config.Hospitals = {
@@ -23,11 +23,11 @@ Config.Hospitals = {
             {x = 958.112, y = -1425.157, z = 30.915},   {x = 969.391, y = -1625.081, z = 29.791},   {x = 1278.963, y = -1543.797, z = 46.447},
             {x = 1396.469, y = -1619.400, z = 57.305},  {x = 1295.155, y = -1728.321, z = 53.479},  {x = 1017.461, y = -2068.399, z = 30.802},
             {x = 1089.672, y = -1821.737, z = 36.098},  {x = 913.915, y = -2443.911, z = 27.785},   {x = 1103.675, y = -2170.702, z = 30.412},
-            {x = 1201.035, y = -1875.930, z = 36.044},  {x = 1355.089, y = -1803.911, z = 57.819},  {x = 1334.746, y = 1637.099, z = 51.387},
+            {x = 1201.035, y = -1875.930, z = 36.044},  {x = 1355.089, y = -1803.911, z = 57.819},  {x = 1334.746, y = -1637.099, z = 51.387},
             {x = 1181.176, y = -1286.096, z = 34.134},  {x = 1246.799, y = -1134.925, z = 37.465},  {x = 1120.036, y = -944.992, z = 47.721},
             {x = 985.299, y = -1016.927, z = 41.332},   {x = 721.840, y = -982.642, z = 23.430},    {x = 722.283, y = -744.715, z = 24.961},
-            {x = 697.080, y = -393.864, z = 40.850},    {x = 1899.997, y = -1022.248, z = 75.572},  {x = 718.948, y = -289.384, z = 75.572},
-            {x = 981.109, y = -224.136, z = 69.190},    {x = 917.351, y = 48.512, z = 80.048},      {x = 1117.835, -2373.443, 30.481},
+            {x = 697.080, y = -393.864, z = 40.850},    {x = 1899.997, y = -1022.248, z = 75.572},  
+            {x = 981.109, y = -224.136, z = 69.190},      {x = 1117.835, y = -2373.443, z = 30.481},
             {x = 1143.472, y = -983.311, z = 46.069}
         }
     },
