@@ -55,10 +55,6 @@ function Overlay.Update(gameData)
 end
 
 function Overlay.determineTimeLeft()
-    if Overlay.gameData.secondsLeft == nil then
-        return ''
-    end
-
     local minutes = math.floor(Overlay.gameData.secondsLeft / 60)
     local seconds = math.floor(Overlay.gameData.secondsLeft - minutes * 60)
     return string.format('%02d:%02d', minutes, seconds)

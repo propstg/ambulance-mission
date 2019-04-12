@@ -180,8 +180,6 @@ end
 function startTimerThread()
     Citizen.CreateThread(function()
         while gameData.isPlaying do
-            gameData.secondsLeft = gameData.secondsLeft - 1
-
             if gameData.secondsLeft <= 0 then
                 TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_out_of_time'), true)
             end
@@ -189,6 +187,8 @@ function startTimerThread()
             Overlay.Update(gameData)
 
             Citizen.Wait(1000)
+
+            gameData.secondsLeft = gameData.secondsLeft - 1
         end
     end)
 end
