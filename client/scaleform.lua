@@ -1,11 +1,12 @@
 Scaleform = {}
 
+function Scaleform.ShowPassed()
+    Scaleform.ShowWasted(_('terminate_won'), '', 5)
+end
+
 function Scaleform.ShowWasted(message, subMessage, secondsToShow)
     Citizen.CreateThread(function()
-        local scaleform = RequestScaleformMovie('mp_big_message_freemode')
-        while not HasScaleformMovieLoaded(scaleform) do
-            Citizen.Wait(0)
-        end
+        local scaleform = Scaleform.LoadScaleform('MP_BIG_MESSAGE_FREEMODE')
 
         BeginScaleformMovieMethod(scaleform, 'SHOW_SHARD_WASTED_MP_MESSAGE')
         PushScaleformMovieMethodParameterString(message)
@@ -13,33 +14,20 @@ function Scaleform.ShowWasted(message, subMessage, secondsToShow)
         PushScaleformMovieMethodParameterInt(5)
         EndScaleformMovieMethod()
 
-        for i = 1, secondsToShow * 50 do
-            DrawScaleformMovieFullscreen(scaleform, 255, 255, 255, 255)
-            Citizen.Wait(0)
-        end
+        Scaleform.Draw(scaleform, secondsToShow * 50, 0)
     end)
-end
-
-function Scaleform.ShowPassed()
-    Scaleform.ShowWasted(_('terminate_won'), '', 5)
 end
 
 function Scaleform.ShowMessage(message, subMessage, secondsToShow)
     Citizen.CreateThread(function()
-        local scaleform = RequestScaleformMovie('MIDSIZED_MESSAGE')
-        while not HasScaleformMovieLoaded(scaleform) do
-            Citizen.Wait(1)
-        end
+        local scaleform = Scaleform.LoadScaleform('MIDSIZED_MESSAGE')
 
         BeginScaleformMovieMethod(scaleform, 'SHOW_MIDSIZED_MESSAGE')
         PushScaleformMovieMethodParameterString(message)
         PushScaleformMovieMethodParameterString(subMessage)
         EndScaleformMovieMethod()
 
-        for i = 1, secondsToShow * 50 do
-            DrawScaleformMovieFullscreen(scaleform, 255, 255, 255, 255)
-            Citizen.Wait(1)
-        end
+        Scaleform.Draw(scaleform, secondsToShow * 50, 1)
     end)
 end
 
@@ -53,10 +41,7 @@ end
 
 function Scaleform.ShowCountdown(text, r, g, b)
     Citizen.CreateThread(function()
-        local scaleform = RequestScaleformMovie('COUNTDOWN')
-        while not HasScaleformMovieLoaded(scaleform) do
-            Citizen.Wait(0)
-        end
+        local scaleform = Scaleform.LoadScaleform('COUNTDOWN')
 
         BeginScaleformMovieMethod(scaleform, 'SET_MESSAGE')
         PushScaleformMovieMethodParameterString(text)
@@ -66,9 +51,23 @@ function Scaleform.ShowCountdown(text, r, g, b)
         PushScaleformMovieMethodParameterBool(false)
         EndScaleformMovieMethod()
 
-        for i = 1, 40 do
-            DrawScaleformMovieFullscreen(scaleform, 255, 255, 255, 255)
-            Citizen.Wait(10)
-        end
+        Scaleform.Draw(scaleform, 40, 10)
     end)
+end
+
+function Scaleform.LoadScaleform(scaleformName)
+    local scaleform = RequestScaleformMovie(scaleformName)
+
+    while not HasScaleformMovieLoaded(scaleform) do
+        Citizen.Wait(0)
+    end
+
+    return scaleform
+end
+
+function Scaleform.Draw(scaleform, loops, delayBetweenLoops)
+    for i = 1, loops do
+        DrawScaleformMovieFullscreen(scaleform, 255, 255, 255, 255)
+        Citizen.Wait(delayBetweenLoops)
+    end
 end

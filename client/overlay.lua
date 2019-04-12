@@ -1,7 +1,19 @@
 Overlay = {}
 Overlay.isVisible = false
 Overlay.wasPaused = false
-Overlay.gameData = {} -- {secondsLeft: xxx, pedsInAmbulance: {}, level: xxx}
+Overlay.gameData = {
+    secondsLeft = 0,
+    level = 0,
+    peds = {},
+    pedsInAmbulance = {}
+}
+
+function Overlay.Init()
+    Overlay.SendMessage({
+        type = 'init',
+        translatedLabels = Locales[Config.Locale]
+    })
+end
 
 function Overlay.Stop()
     Overlay.isVisible = false
@@ -28,6 +40,20 @@ function Overlay.Start(gameData)
     end)
 end
 
+function Overlay.Update(gameData)
+    Overlay.gameData = gameData
+
+    local data = {
+        type = 'tick',
+        timeLeft = Overlay.determineTimeLeft(),
+        level = Overlay.gameData.level,
+        emptySeats = Config.MaxPatientsPerTrip - #Overlay.gameData.pedsInAmbulance,
+        patientsLeft = #Overlay.gameData.peds
+    }
+
+    Overlay.SendMessage(data)
+end
+
 function Overlay.determineTimeLeft()
     if Overlay.gameData.secondsLeft == nil then
         return ''
@@ -35,50 +61,7 @@ function Overlay.determineTimeLeft()
 
     local minutes = math.floor(Overlay.gameData.secondsLeft / 60)
     local seconds = math.floor(Overlay.gameData.secondsLeft - minutes * 60)
-    local formattedTime = string.format('%02d:%02d', minutes, seconds)
-
-    return formattedTime
-end
-
-function Overlay.determineLevel()
-    return Overlay.gameData.level
-end
-
-function Overlay.determineEmptySeats()
-    if Overlay.gameData.pedsInAmbulance == nil then
-        return ''
-    end
-
-    return Config.MaxPatientsPerTrip - #Overlay.gameData.pedsInAmbulance
-end
-
-function Overlay.determinePatientsLeft()
-    if Overlay.gameData.peds == nil then
-        return ''
-    end
-
-    return #Overlay.gameData.peds
-end
-
-function Overlay.Update(gameData)
-    Overlay.gameData = gameData
-
-    local data = {
-        type = 'tick',
-        timeLeft = Overlay.determineTimeLeft(),
-        level = Overlay.determineLevel(),
-        emptySeats = Overlay.determineEmptySeats(),
-        patientsLeft = Overlay.determinePatientsLeft()
-    }
-
-    Overlay.SendMessage(data)
-end
-
-function Overlay.Init()
-    Overlay.SendMessage({
-        type = 'init',
-        translatedLabels = Locales[Config.Locale]
-    })
+    return string.format('%02d:%02d', minutes, seconds)
 end
 
 function Overlay.SendChangeVisibilityMessage(visible)
@@ -87,7 +70,6 @@ function Overlay.SendChangeVisibilityMessage(visible)
         visible = visible
     })
 end
-
 
 function Overlay.SendMessage(message)
     SendNuiMessage(json.encode(message))

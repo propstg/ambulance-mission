@@ -1,6 +1,6 @@
 Locales['en'] = {
-    ['start_game'] =                        'press ~' .. Config.ActivationKeyText .. '~ to start ambulance mission.',
-    ['end_level'] =                         'Level %s finished. You got $%s!',
+    ['start_game_help'] =                   'press ~' .. Config.ActivationKeyText .. '~ to start ambulance mission.',
+    ['stop_game_help'] =                    'press ~INPUT_CONTEXT~ to stop mission.',
     ['start_level_header'] =                'Level %s',
     ['start_level_sub_one'] =               'Pick up the patient and take them to the hospital',
     ['start_level_sub_multi'] =             'Pick up %s patients and take them to the hospital',

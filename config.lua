@@ -9,10 +9,32 @@ Config.InitialSeconds = 120
 Config.MaxPatientsPerTrip = 3
 Config.MaxLevels = 5
 Config.MoneyPerLevelFormula = function(level) return 100 * level * level end
-Config.AdditionalTimeForDropOff = function(numberPeds) return 30 * numberPeds end
 Config.AdditionalTimeForPickup = function(distanceFromHospital) return math.floor(distanceFromHospital / 25) end
 Config.LoseTimeForDamage = function(damage) return math.floor(damage) end
-Config.OverlayBaseCoords = {x = 5.0, y = 5.0}
+
+Config.EnterVehicleTimeout = 10000
+Config.Markers = {
+    Size = 10.0,
+}
+
+Config.Sounds = {
+    failedMission = {
+        audioRef = 'MissionFailedSounds', 
+        audioName = 'ScreenFlash'
+    },
+    passedMission = {
+        audioRef = 'DLC_HEISTS_GENERAL_FRONTEND_SOUNDS',
+        audioName = 'Mission_Pass_Notify'
+    },
+    timeAdded = {
+        audioRef = 'DLC_HEIST_BIOLAB_PREP_HACKING_SOUNDS',
+        audioName = 'Hack_Success'
+    },
+    timeRemoved = {
+        audioRef = 'DLC_HEIST_BIOLAB_PREP_HACKING_SOUNDS',
+        audioName = 'Hack_Failed'
+    }
+}
 
 Config.Hospitals = {
     { -- east los santos
@@ -45,12 +67,6 @@ Config.Hospitals = {
     --pillbox: 
     --{x = 458.589, y = -1095.726, z = 29.019},
             --{x = 461.959, y = -759.552, z = 27.357}, {x = 
-}
-
-Config.EnterVehicleTimeout = 10000
-Config.DelayBetweenChanges = 1000
-Config.Markers = {
-    Size = 10.0,
 }
 
 Config.PedModels = {

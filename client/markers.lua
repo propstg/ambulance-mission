@@ -3,6 +3,7 @@ Markers.showMarkers = false
 Markers.showHospital = false
 Markers.markerPositions = {}
 Markers.hospitalMarkerPosition = nil
+Markers.markerSize = Config.Markers.Size / 2.0
 
 function Markers.StartMarkers(hospitalMarker)
     Markers.showMarkers = true
@@ -51,15 +52,13 @@ function Markers.drawHospitalMarker(coords)
     Markers.drawMarker(coords,
         1, -- MarkerTypeVerticalCylinder
         0.0,
-        Config.Markers.Size / 2.0,
+        Markers.markerSize,
         -1.0,
         false
     )
 end
 
 function Markers.drawMarker(coords, type, yRot, scaleY, zOffset, bobUpAndDown)
-    local markerSize = Config.Markers.Size / 2.0
-
     DrawMarker(type,        -- type
         coords.x,           -- posX
         coords.y,           -- posY
@@ -70,7 +69,7 @@ function Markers.drawMarker(coords, type, yRot, scaleY, zOffset, bobUpAndDown)
         0.0,                -- rotX
         yRot,               -- rotY
         0.0,                -- rotZ
-        markerSize,         -- scaleX
+        Markers.markerSize, -- scaleX
         scaleY,             -- scaleY
         10.0,               -- scaleZ
         0,                  -- red

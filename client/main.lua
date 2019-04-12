@@ -4,6 +4,8 @@ local TERMINATE_GAME_EVENT = 'blargleambulance:terminateGame'
 local START_GAME_EVENT = 'blargleambulance:startGame'
 local SERVER_EVENT = 'blargleambulance:finishLevel'
 
+local AMBULANCE_HASH = GetHashKey('Ambulance')
+
 local playerData = {
     ped = nil,
     position = nil,
@@ -26,7 +28,7 @@ local gameData = {
 Citizen.CreateThread(function()
     waitForEsxInitialization()
     Overlay.Init()
-    waitForControlLoop()
+    controlLoop()
     mainLoop()
 end)
 
@@ -35,6 +37,25 @@ function waitForEsxInitialization()
         TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
         Citizen.Wait(0)
     end
+end
+
+function controlLoop()
+    Citizen.CreateThread(function()
+        while true do
+            if IsControlJustPressed(1, Config.ActivationKey) then
+                if gameData.isPlaying then
+                    TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_requested'), true)
+                    Citizen.Wait(5000)
+                elseif playerData.isInAmbulance then
+                    TriggerEvent(START_GAME_EVENT)
+                    ESX.ShowHelpNotification(_('stop_game_help'))
+                    Citizen.Wait(5000)
+                end
+            end
+
+            Citizen.Wait(5)
+        end
+    end)
 end
 
 function mainLoop()
@@ -54,13 +75,34 @@ function mainLoop()
 
             handleAmbulanceDamageDetection()
         elseif not playerData.isInAmbulance and newPlayerData.isInAmbulance then
-            ESX.ShowHelpNotification(_('start_game'))
+            ESX.ShowHelpNotification(_('start_game_help'))
         end
 
         playerData = newPlayerData
 
         Citizen.Wait(500)
     end
+end
+
+function gatherData()
+    local newPlayerData = {}
+    newPlayerData.ped = PlayerPedId()
+    newPlayerData.position = GetEntityCoords(playerData.ped)
+    newPlayerData.vehicle = GetVehiclePedIsIn(playerData.ped, false)
+    newPlayerData.isPlayerDead = IsPedDeadOrDying(newPlayerData.ped, true)
+
+    newPlayerData.isInAmbulance = false
+    newPlayerData.isAmbulanceDriveable = false
+
+    if newPlayerData.vehicle ~= nil then
+        newPlayerData.isInAmbulance = IsVehicleModel(newPlayerData.vehicle, AMBULANCE_HASH)
+
+        if newPlayerData.isInAmbulance then
+            newPlayerData.isAmbulanceDriveable = IsVehicleDriveable(newPlayerData.vehicle, true)
+        end
+    end
+
+    return newPlayerData
 end
 
 function areAnyPatientsDead()
@@ -83,53 +125,13 @@ function handleAmbulanceDamageDetection()
     gameData.lastVehicleHealth = vehicleHealth
 end
 
-function waitForControlLoop()
-    Citizen.CreateThread(function()
-        while true do
-            if IsControlJustPressed(1, Config.ActivationKey) then
-                if gameData.isPlaying then
-                    TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_requested'), true)
-                    Citizen.Wait(5000)
-                elseif playerData.isInAmbulance then
-                    TriggerEvent(START_GAME_EVENT)
-                    ESX.ShowHelpNotification('Press ~INPUT_CONTEXT~ to stop mission.')
-                    Citizen.Wait(5000)
-                end
-            end
-
-            Citizen.Wait(5)
-        end
-    end)
-end
-
-function gatherData()
-    local newPlayerData = {}
-    newPlayerData.ped = PlayerPedId()
-    newPlayerData.position = GetEntityCoords(playerData.ped)
-    newPlayerData.vehicle = GetVehiclePedIsIn(playerData.ped, false)
-    newPlayerData.isPlayerDead = IsPedDeadOrDying(newPlayerData.ped, true)
-
-    newPlayerData.isInAmbulance = false
-    newPlayerData.isAmbulanceDriveable = false
-
-    if newPlayerData.vehicle ~= nil then
-        newPlayerData.isInAmbulance = IsVehicleModel(newPlayerData.vehicle, GetHashKey('Ambulance'))
-
-        if newPlayerData.isInAmbulance then
-            newPlayerData.isAmbulanceDriveable = IsVehicleDriveable(newPlayerData.vehicle, true)
-        end
-    end
-
-    return newPlayerData
-end
-
 AddEventHandler(TERMINATE_GAME_EVENT, function(reasonForTerminating, failed)
     if failed then
         Scaleform.ShowWasted(_('terminate_failed'), reasonForTerminating, 5)
-        PlaySoundFrontend(-1, 'ScreenFlash', 'MissionFailedSounds', 1)
+        playSound(Config.Sounds.failedMission)
     else
         Scaleform.ShowPassed()
-        PlaySoundFrontend(-1, 'Mission_Pass_Notify', 'DLC_HEISTS_GENERAL_FRONTEND_SOUNDS', 1)
+        playSound(Config.Sounds.passedMission)
     end
 
     gameData.isPlaying = false
@@ -141,7 +143,6 @@ AddEventHandler(TERMINATE_GAME_EVENT, function(reasonForTerminating, failed)
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
 end)
 
-
 AddEventHandler(START_GAME_EVENT, function()
     gameData.hospitalLocation = findNearestHospital(playerData.position)
     gameData.secondsLeft = Config.InitialSeconds
@@ -151,7 +152,7 @@ AddEventHandler(START_GAME_EVENT, function()
     gameData.lastVehicleHealth = GetVehicleBodyHealth(playerData.vehicle)
     gameData.isPlaying = true
     
-    Overlay.Start(ESX, gameData)
+    Overlay.Start(gameData)
     Markers.StartMarkers(gameData.hospitalLocation)
     Blips.StartBlips(gameData.hospitalLocation)
     setupLevel()
@@ -179,7 +180,6 @@ end
 function startTimerThread()
     Citizen.CreateThread(function()
         while gameData.isPlaying do
-            Citizen.Wait(1000)
             gameData.secondsLeft = gameData.secondsLeft - 1
 
             if gameData.secondsLeft <= 0 then
@@ -187,6 +187,8 @@ function startTimerThread()
             end
 
             Overlay.Update(gameData)
+
+            Citizen.Wait(1000)
         end
     end)
 end
@@ -194,7 +196,6 @@ end
 function startGameLoop()
     Citizen.CreateThread(function()
         while gameData.isPlaying do
-
             if getDistance(playerData.position, gameData.hospitalLocation) <= 10.0 and #gameData.pedsInAmbulance > 0 then
                 handlePatientDropOff()
             else
@@ -237,6 +238,7 @@ function handlePatientPickUps()
     for index, ped in pairs(gameData.peds) do
         if getDistance(playerData.position, ped.coords) <= 10.0 then
             displayMessageAndWaitUntilStopped('stop_ambulance_pickup')
+
             handleLoading(ped, index)
             addTime(Config.AdditionalTimeForPickup(getDistance(gameData.hospitalPosition, ped.coords)))
             updateMarkersAndBlips()
@@ -258,10 +260,10 @@ function addTime(timeToAdd)
 
     if timeToAdd > 0 then
         Scaleform.ShowAddTime(_('time_added', timeToAdd))
-        PlaySoundFrontend(-1, 'Hack_Success', 'DLC_HEIST_BIOLAB_PREP_HACKING_SOUNDS', true)
+        playSound(Config.Sounds.timeAdded)
     elseif timeToAdd < 0 then
         Scaleform.ShowRemoveTime(_('time_removed', timeToAdd))
-        PlaySoundFrontend(-1, 'Hack_Failed', 'DLC_HEIST_BIOLAB_PREP_HACKING_SOUNDS', true)
+        playSound(Config.Sounds.timeRemoved)
     end
 end
 
@@ -269,11 +271,11 @@ function handleLoading(ped, index)
     local freeSeat = findFirstFreeSeat()
     Peds.EnterVehicle(ped.model, playerData.vehicle, freeSeat)
     table.insert(gameData.pedsInAmbulance, ped)
-    waitUntilPatientOnBus(ped)
+    waitUntilPatientInAmbulance(ped)
     table.remove(gameData.peds, index)
 end
 
-function waitUntilPatientOnBus(ped)
+function waitUntilPatientInAmbulance(ped)
     while gameData.isPlaying do
         if Peds.IsPedInVehicleOrTooFarAway(ped.model, ped.coords) then
             return
@@ -298,6 +300,7 @@ function setupLevel()
     else
         subMessage = _('start_level_sub_multi', gameData.level)
     end
+    
     Scaleform.ShowMessage(_('start_level_header', gameData.level), subMessage, 5)
 end
 
@@ -333,4 +336,8 @@ function updateMarkersAndBlips()
     local isAnyoneInAmbulance = #gameData.pedsInAmbulance > 0
     Blips.SetFlashHospital(isAnyoneInAmbulance)
     Markers.SetShowHospital(isAnyoneInAmbulance)
+end
+
+function playSound(sound)
+    PlaySoundFrontend(-1, sound.audioName, sound.audioRef, 1)
 end
