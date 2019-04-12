@@ -25,6 +25,7 @@ local gameData = {
 
 Citizen.CreateThread(function()
     waitForEsxInitialization()
+    Overlay.Init()
     waitForControlLoop()
     mainLoop()
 end)

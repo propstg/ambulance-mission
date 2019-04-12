@@ -22,8 +22,8 @@ Locales['en'] = {
     ['return_to_hospital_sub_full'] =       'The ambulance is full',
     ['stop_ambulance_dropoff'] =            'Stop ambulance to drop patients off',
     ['stop_ambulance_pickup'] =             'Stop ambulance to pick up patient',
-    ['overlay_level'] =                     'Level:  %s',
-    ['overlay_time_left'] =                 'Time left:  %s',
-    ['overlay_empty_seats'] =               'Empty seats:  %s',
-    ['overlay_patients_left'] =             'Patients left:  %s',
+    ['overlay_level_label'] =               'Level',
+    ['overlay_time_left_label'] =           'Time',
+    ['overlay_empty_seats_label'] =         'Empty Seats',
+    ['overlay_patients_left_label'] =       'Patients Left',
 }

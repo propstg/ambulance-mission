@@ -1,70 +1,79 @@
 Overlay = {}
-Overlay.ESX = nil
 Overlay.isVisible = false
 Overlay.gameData = {} -- {secondsLeft: xxx, pedsInAmbulance: {}, level: xxx}
 
 function Overlay.Stop()
     Overlay.isVisible = false
+    Overlay.SendMessage({
+        type = 'changeVisibility',
+        visible = false
+    })
 end
 
-function Overlay.Start(ESX, gameData)
-    Overlay.ESX = ESX
+function Overlay.Start(gameData)
     Overlay.isVisible = true
-    Overlay.gameData = gameData
 
-    Citizen.CreateThread(function()
-        while Overlay.isVisible do
-            Citizen.Wait(5)
-            Overlay.drawTimeLeft()
-            Overlay.drawLevel()
-            Overlay.drawEmptySeats()
-            Overlay.drawPatientsLeft()
-        end
-    end)
+    Overlay.Update(gameData)
+
+    Overlay.SendMessage({
+        type = 'changeVisibility',
+        visible = true
+    })
 end
 
-function Overlay.drawTimeLeft()
+function Overlay.determineTimeLeft()
+    if Overlay.gameData.secondsLeft == nil then
+        return ''
+    end
+
     local minutes = math.floor(Overlay.gameData.secondsLeft / 60)
     local seconds = math.floor(Overlay.gameData.secondsLeft - minutes * 60)
     local formattedTime = string.format('%02d:%02d', minutes, seconds)
 
-    drawTxt(1.35, 0.80, 1.0, 1.0, 0.5, _('overlay_time_left', formattedTime), 255, 255, 255, 255)
+    return _('overlay_time_left', formattedTime)
 end
 
-function Overlay.drawLevel()
-    drawTxt(1.35, 0.84, 1.0, 1.0, 0.4, _('overlay_level', Overlay.gameData.level), 255, 255, 255, 255)
+function Overlay.determineLevel()
+    return Overlay.gameData.level
 end
 
-function Overlay.drawEmptySeats()
-    local emptySeats = Config.MaxPatientsPerTrip - #Overlay.gameData.pedsInAmbulance
-    drawTxt(1.35, 0.87, 1.0, 1.0, 0.4, _('overlay_empty_seats', emptySeats), 255, 255, 255, 255)
+function Overlay.determineEmptySeats()
+    if Overlay.gameData.pedsInAmbulance == nil then
+        return ''
+    end
+
+    return Config.MaxPatientsPerTrip - #Overlay.gameData.pedsInAmbulance
 end
 
-function Overlay.drawPatientsLeft()
-    drawTxt(1.35, 0.90, 1.0, 1.0, 0.4, _('overlay_patients_left', #Overlay.gameData.peds), 255, 255, 255, 255)
-end
+function Overlay.determinePatientsLeft()
+    if Overlay.gameData.peds == nil then
+        return ''
+    end
 
-function drawText(text, yOffset, size)
-    local baseCoords = Config.OverlayBaseCoords
-
-end
-
-function drawTxt(x,y ,width,height,scale, text, r,g,b,a, outline)
-    SetTextFont(0)
-    SetTextProportional(0)
-    SetTextScale(scale, scale)
-    SetTextColour(r, g, b, a)
-    SetTextDropShadow(0, 0, 0, 0,255)
-    SetTextEdge(1, 0, 0, 0, 255)
-    SetTextDropShadow()
-    if(outline)then
-	    SetTextOutline()
-	end
-    SetTextEntry("STRING")
-    AddTextComponentString(text)
-    DrawText(x - width/2, y - height/2 + 0.005)
+    return #Overlay.gameData.peds
 end
 
 function Overlay.Update(gameData)
     Overlay.gameData = gameData
+
+    local data = {
+        type = 'tick',
+        timeLeft = Overlay.determineTimeLeft(),
+        level = Overlay.determineLevel(),
+        emptySeats = Overlay.determineEmptySeats(),
+        patientsLeft = Overlay.determinePatientsLeft()
+    }
+
+    Overlay.SendMessage(data)
+end
+
+function Overlay.Init()
+    Overlay.SendMessage({
+        type = 'init',
+        translatedLabels = Locales[Config.Locale]
+    })
+end
+
+function Overlay.SendMessage(message)
+    SendNuiMessage(json.encode(message))
 end

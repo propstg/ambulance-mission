@@ -1,0 +1,39 @@
+@font-face {
+    font-family: 'Font2_cond';
+    src: url(https://runtime.fivem.net/temp/chaletcomprime-colognesixty-webfont.ttf?a);
+}
+
+body {
+    display: none;
+    overflow: hidden;
+    font-size: 3em;
+    font-variant: small-caps;
+    font-family: Font2_cond, 'Helvetica';
+    color: white;
+}
+
+#container {
+    position: absolute;
+    width: 275px;
+    right: 1%;
+    top: 50%;
+}
+
+.row {
+    background-color: white;
+    margin-bottom: 5px;
+    background-color: linear-gradient(to right, rgba(255, 0, 0, 0), rgba(255, 0, 0, 1));
+    background-color: rgba(0, 0, 150, .6);
+
+}
+
+.label {
+    display: inline-block;
+    text-align: right;
+    margin-right: 10px;
+    width: 175px;
+}
+
+.value {
+    font-weight: bolder;
+}
