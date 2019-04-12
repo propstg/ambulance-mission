@@ -8,9 +8,12 @@ Config.ActivationKeyText = 'INPUT_CONTEXT'
 Config.InitialSeconds = 120
 Config.MaxPatientsPerTrip = 3
 Config.MaxLevels = 5
-Config.MoneyPerLevelFormula = function(level) return 100 * level * level end
-Config.AdditionalTimeForPickup = function(distanceFromHospital) return math.floor(distanceFromHospital / 25) end
-Config.LoseTimeForDamage = function(damage) return math.floor(damage) end
+
+Config.Formulas = {
+    moneyPerLevel           = function(level)                   return 100 * level * level end,
+    additionalTimeForPickup = function(distanceFromHospital)    return math.floor(distanceFromHospital / 25) end,
+    timeLostForDamage       = function(damage)                  return math.floor(damage) end,
+}
 
 Config.EnterVehicleTimeout = 10000
 Config.Markers = {

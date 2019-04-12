@@ -22,9 +22,7 @@ body {
 .row {
     background-color: white;
     margin-bottom: 5px;
-    background-color: linear-gradient(to right, rgba(255, 0, 0, 0), rgba(255, 0, 0, 1));
     background-color: rgba(0, 0, 150, .6);
-
 }
 
 .label {

@@ -1,11 +1,10 @@
 Locales['en'] = {
     ['start_game_help'] =                   'press ~' .. Config.ActivationKeyText .. '~ to start ambulance mission.',
-    ['stop_game_help'] =                    'press ~INPUT_CONTEXT~ to stop mission.',
+    ['stop_game_help'] =                    'press ~' .. Config.ActivationKeyText .. '~ to stop mission.',
     ['start_level_header'] =                'Level %s',
     ['start_level_sub_one'] =               'Pick up the patient and take them to the hospital',
     ['start_level_sub_multi'] =             'Pick up %s patients and take them to the hospital',
-    ['time_added'] =                        '+%.2f s',
-    ['time_removed'] =                      '%.2f s',
+    ['time_added'] =                        '%+d s',
     ['terminate_failed'] =                  '~r~Mission failed',
     ['terminate_won'] =                     '~g~Mission passed',
     ['terminate_left_ambulance'] =          'You left the ambulance',

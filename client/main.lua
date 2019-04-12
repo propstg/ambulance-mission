@@ -119,7 +119,7 @@ function handleAmbulanceDamageDetection()
     local vehicleHealth = GetVehicleBodyHealth(playerData.vehicle)
 
     if #gameData.pedsInAmbulance > 0 and vehicleHealth < gameData.lastVehicleHealth then
-        addTime(Config.LoseTimeForDamage(vehicleHealth - gameData.lastVehicleHealth))
+        addTime(Config.Formulas.timeLostForDamage(vehicleHealth - gameData.lastVehicleHealth))
     end
 
     gameData.lastVehicleHealth = vehicleHealth
@@ -240,7 +240,7 @@ function handlePatientPickUps()
             displayMessageAndWaitUntilStopped('stop_ambulance_pickup')
 
             handleLoading(ped, index)
-            addTime(Config.AdditionalTimeForPickup(getDistance(gameData.hospitalPosition, ped.coords)))
+            addTime(Config.Formulas.additionalTimeForPickup(getDistance(gameData.hospitalPosition, ped.coords)))
             updateMarkersAndBlips()
             Overlay.Update(gameData)
 
@@ -262,7 +262,7 @@ function addTime(timeToAdd)
         Scaleform.ShowAddTime(_('time_added', timeToAdd))
         playSound(Config.Sounds.timeAdded)
     elseif timeToAdd < 0 then
-        Scaleform.ShowRemoveTime(_('time_removed', timeToAdd))
+        Scaleform.ShowRemoveTime(_('time_added', timeToAdd))
         playSound(Config.Sounds.timeRemoved)
     end
 end

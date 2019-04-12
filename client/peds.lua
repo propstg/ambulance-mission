@@ -12,8 +12,6 @@ function Peds.CreateRandomPedInArea(coords)
     Peds.WanderInArea(ped, coords)
     Peds.incrementModelsHashUsedByPedCount(modelName)
 
-    Log.debug("spawned ped at " .. x .. ", " .. y)
-
     return {
         model = ped,
         coords = {x = x, y = y, z = coords.z}
