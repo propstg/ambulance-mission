@@ -9,6 +9,8 @@ server_scripts {
     'server/main.lua'
 }
 
+ui_page 'html/index.html'
+
 client_scripts {
     '@es_extended/locale.lua',
     'config.lua',
@@ -21,6 +23,12 @@ client_scripts {
     'client/overlay.lua',
     'client/scaleform.lua',
     'client/main.lua'
+}
+
+files {
+    'html/index.html',
+    'html/style.css',
+    'html/script.js'
 }
 
 dependencies {
