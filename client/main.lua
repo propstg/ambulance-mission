@@ -26,11 +26,23 @@ local gameData = {
 }
 
 Citizen.CreateThread(function()
+    checkForTypoedSpawnPointCoordinates()
     waitForEsxInitialization()
     Overlay.Init()
     controlLoop()
     mainLoop()
 end)
+
+function checkForTypoedSpawnPointCoordinates()
+    for _, hospital in pairs(Config.Hospitals) do
+        for _, location in pairs(hospital.spawnPoints) do
+            local distance = GetDistanceBetweenCoords(vector3(hospital.x, hospital.y, hospital.z), location.x, location.y, location.z)
+            if distance > Config.MaxSpawnPointDistanceAllowedFromHospital then
+                print(string.format('Coordinate too far from hospital! Hospital %s, spawn location %.3f, %.3f, %.3f. Max expected is %d, but this spawn point is %.3f', hospital.name, location.x, location.y, location.z, Config.MaxSpawnPointDistanceAllowedFromHospital, distance))
+            end
+        end
+    end
+end
 
 function waitForEsxInitialization()
     while ESX == nil do
@@ -213,10 +225,10 @@ function handlePatientDropOff()
     local numberDroppedOff = #gameData.pedsInAmbulance
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
     gameData.pedsInAmbulance = {}
-    gameData.secondsLeft = Config.InitialSeconds
     updateMarkersAndBlips()
 
     if #gameData.peds == 0 then
+        gameData.secondsLeft = Config.InitialSeconds
         TriggerServerEvent(SERVER_EVENT, gameData.level)
 
         if gameData.level == Config.MaxLevels then
@@ -225,6 +237,8 @@ function handlePatientDropOff()
             gameData.level = gameData.level + 1
             setupLevel()
         end
+    else
+        addTime(Config.Formulas.additionalTimeForDropOff(numberDroppedOff))
     end
 end
 
@@ -240,7 +254,7 @@ function handlePatientPickUps()
             displayMessageAndWaitUntilStopped('stop_ambulance_pickup')
 
             handleLoading(ped, index)
-            addTime(Config.Formulas.additionalTimeForPickup(getDistance(gameData.hospitalPosition, ped.coords)))
+            addTime(Config.Formulas.additionalTimeForPickup(getDistance(ped.coords, gameData.hospitalLocation)))
             updateMarkersAndBlips()
             Overlay.Update(gameData)
 
@@ -305,7 +319,7 @@ function setupLevel()
 end
 
 function getDistance(coords1, coords2)
-    return GetDistanceBetweenCoords(coords1, coords2.x, coords2.y, coords2.z, true)
+    return GetDistanceBetweenCoords(vector3(coords1.x, coords1.y, coords1.z), coords2.x, coords2.y, coords2.z, false)
 end
 
 function displayMessageAndWaitUntilStopped(notificationMessage)
