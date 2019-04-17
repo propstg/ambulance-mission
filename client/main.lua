@@ -234,6 +234,7 @@ function handlePatientDropOff()
         if gameData.level == Config.MaxLevels then
             TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_finished'), false)
         else
+            playSound(Config.Sounds.timeAdded)
             gameData.level = gameData.level + 1
             setupLevel()
         end

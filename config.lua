@@ -11,7 +11,7 @@ Config.MaxLevels = 5
 
 Config.Formulas = {
     moneyPerLevel               = function(level)                   return 100 * level * level end,
-    additionalTimeForPickup     = function(distanceFromHospital)    return math.floor(distanceFromHospital / 18) end,
+    additionalTimeForPickup     = function(distanceFromHospital)    return math.floor(distanceFromHospital / 15) end,
     additionalTimeForDropOff    = function(numberOfPatients)        return 15 * numberOfPatients end,
     timeLostForDamage           = function(damage)                  return math.floor(damage) end,
 }
