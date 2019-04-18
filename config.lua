@@ -568,7 +568,6 @@ Config.PedModels = {
     'mp_m_forgery_01',
     'mp_m_freemode_01',
     'mp_m_g_vagfun_01',
-    'mp_m_marston_01',
     'mp_m_meth_01',
     'mp_m_niko_01',
     'mp_m_securoguard_01',
@@ -732,4 +731,23 @@ Config.PedModels = {
     'u_m_y_staggrm_01',
     'u_m_y_tattoo_01',
     'u_m_y_zombie_01'
+}
+
+-- https://gist.github.com/alexguirre/f3f47f75ddcf617f416f3c8a55ae2227
+Config.PedDamagePacks = {
+    "BigHitByVehicle",
+    "SCR_Torture",
+    "SCR_Franklin_finb2",
+    "Explosion_Med",
+    "Useful_Bits",
+    "Explosion_Large",
+    "Burnt_Ped_Head_Torso",
+    "Car_Crash_Heavy",
+    "Fall",
+    "HitByVehicle",
+    "BigRunOverByVehicle",
+    "RunOverByVehicle",
+    "SCR_Cougar",
+    "TD_SHOTGUN_FRONT_KILL",
+    "TD_SHOTGUN_REAR_KILL",
 }
