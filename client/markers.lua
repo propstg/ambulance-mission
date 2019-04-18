@@ -13,9 +13,7 @@ function Markers.StartMarkers(hospitalMarker)
         while Markers.showMarkers do
             Citizen.Wait(10)
     
-            for _, markerPosition in pairs(Markers.markerPositions) do
-                Markers.drawPedMarker(markerPosition)
-            end
+            Stream.of(Markers.markerPositions).forEach(Markers.drawPedMarker)
 
             if Markers.showHospital then
                 Markers.drawHospitalMarker(Markers.hospitalMarkerPosition)

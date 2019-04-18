@@ -8,9 +8,13 @@ end
 
 function Blips.UpdateBlips(coordsList)
     Blips.removeAllPatients()
-    Blips.patientBlips = Map.map(coordsList, function(coords)
-        return Blips.CreateAndInitBlip(coords, _('blip_patient'), true, 3)
-    end)
+    Blips.patientBlips = Stream.of(coordsList)
+        .map(Blips.CreatePatientBlip)
+        .collect()
+end
+
+function Blips.CreatePatientBlip(coords)
+    return Blips.CreateAndInitBlip(coords, _('blip_patient'), true, 3)
 end
 
 function Blips.StopBlips()
@@ -19,9 +23,7 @@ function Blips.StopBlips()
 end
 
 function Blips.removeAllPatients()
-    Map.forEach(Blips.patientBlips, function(blip)
-        RemoveBlip(blip)
-    end)
+    Stream.of(Blips.patientBlips).forEach(RemoveBlip)
 end
 
 function Blips.SetFlashHospital(flashHospital)

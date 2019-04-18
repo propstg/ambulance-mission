@@ -118,13 +118,8 @@ function gatherData()
 end
 
 function areAnyPatientsDead()
-    for _, patient in pairs(gameData.peds) do
-        if IsPedDeadOrDying(patient.model, 1) then
-            return true
-        end
-    end
-
-    return false
+    return Stream.of(gameData.peds)
+        .anyMatch(function(patient) return IsPedDeadOrDying(patient.model, 1) end)
 end
 
 function handleAmbulanceDamageDetection()
@@ -244,9 +239,9 @@ function handlePatientDropOff()
 end
 
 function mapPedsToModel(peds)
-    return Map.map(peds, function(ped)
-        return ped.model
-    end)
+    return Stream.of(peds)
+        .map(function(ped) return ped.model end)
+        .collect()
 end
 
 function handlePatientPickUps()
@@ -300,12 +295,11 @@ function waitUntilPatientInAmbulance(ped)
 end
 
 function setupLevel()
-    local locations = Map.shuffle(gameData.hospitalLocation.spawnPoints)
-    locations = Map.filter(locations, function(location, index) return index <= gameData.level end)
-
-    Map.forEach(locations, function(location)
-        table.insert(gameData.peds, Peds.CreateRandomPedInArea(location))
-    end)
+    gameData.peds = Stream.of(gameData.hospitalLocation.spawnPoints)
+        .shuffle()
+        .filter(function(location, index) return index <= gameData.level end)
+        .map(Peds.CreateRandomPedInArea)
+        .collect()
 
     updateMarkersAndBlips()
 
@@ -341,9 +335,9 @@ function findFirstFreeSeat()
 end
 
 function updateMarkersAndBlips()
-    local coordsList = Map.map(gameData.peds, function(ped)
-        return ped.coords
-    end)
+    local coordsList = Stream.of(gameData.peds)
+        .map(function(ped) return ped.coords end)
+        .collect()
 
     Blips.UpdateBlips(coordsList)
     Markers.UpdateMarkers(coordsList)
