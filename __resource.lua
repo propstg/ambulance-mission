@@ -15,7 +15,7 @@ client_scripts {
     '@es_extended/locale.lua',
     'config.lua',
     'locales/en.lua',
-    'client/map.lua',
+    'client/stream.lua',
     'client/log.lua',
     'client/blips.lua',
     'client/markers.lua',

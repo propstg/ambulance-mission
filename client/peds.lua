@@ -7,9 +7,10 @@ function Peds.CreateRandomPedInArea(coords)
     local x = coords.x + math.random() * 4 - 2
     local y = coords.y + math.random() * 4 - 2
     local heading = math.random() * 360
+    local pedDamagePack = Config.PedDamagePacks[math.random(#Config.PedDamagePacks)]
     
     local ped = CreatePed(4, modelName, x, y, coords.z, heading, true, false)
-    ApplyPedDamagePack(ped, 'BigHitByVehicle', 100.0, 100.0)
+    ApplyPedDamagePack(ped, pedDamagePack, 100.0, 100.0)
     Peds.WanderInArea(ped, coords)
     Peds.incrementModelsHashUsedByPedCount(modelName)
 

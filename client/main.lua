@@ -26,11 +26,23 @@ local gameData = {
 }
 
 Citizen.CreateThread(function()
+    checkForTypoedSpawnPointCoordinates()
     waitForEsxInitialization()
     Overlay.Init()
     controlLoop()
     mainLoop()
 end)
+
+function checkForTypoedSpawnPointCoordinates()
+    for _, hospital in pairs(Config.Hospitals) do
+        for _, location in pairs(hospital.spawnPoints) do
+            local distance = GetDistanceBetweenCoords(vector3(hospital.x, hospital.y, hospital.z), location.x, location.y, location.z)
+            if distance > Config.MaxSpawnPointDistanceAllowedFromHospital then
+                print(string.format('Coordinate too far from hospital! Hospital %s, spawn location %.3f, %.3f, %.3f. Max expected is %d, but this spawn point is %.3f', hospital.name, location.x, location.y, location.z, Config.MaxSpawnPointDistanceAllowedFromHospital, distance))
+            end
+        end
+    end
+end
 
 function waitForEsxInitialization()
     while ESX == nil do
@@ -106,13 +118,8 @@ function gatherData()
 end
 
 function areAnyPatientsDead()
-    for _, patient in pairs(gameData.peds) do
-        if IsPedDeadOrDying(patient.model, 1) then
-            return true
-        end
-    end
-
-    return false
+    return Stream.of(gameData.peds)
+        .anyMatch(function(patient) return IsPedDeadOrDying(patient.model, 1) end)
 end
 
 function handleAmbulanceDamageDetection()
@@ -213,25 +220,28 @@ function handlePatientDropOff()
     local numberDroppedOff = #gameData.pedsInAmbulance
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
     gameData.pedsInAmbulance = {}
-    gameData.secondsLeft = Config.InitialSeconds
     updateMarkersAndBlips()
 
     if #gameData.peds == 0 then
+        gameData.secondsLeft = Config.InitialSeconds
         TriggerServerEvent(SERVER_EVENT, gameData.level)
 
         if gameData.level == Config.MaxLevels then
             TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_finished'), false)
         else
+            playSound(Config.Sounds.timeAdded)
             gameData.level = gameData.level + 1
             setupLevel()
         end
+    else
+        addTime(Config.Formulas.additionalTimeForDropOff(numberDroppedOff))
     end
 end
 
 function mapPedsToModel(peds)
-    return Map.map(peds, function(ped)
-        return ped.model
-    end)
+    return Stream.of(peds)
+        .map(function(ped) return ped.model end)
+        .collect()
 end
 
 function handlePatientPickUps()
@@ -240,7 +250,7 @@ function handlePatientPickUps()
             displayMessageAndWaitUntilStopped('stop_ambulance_pickup')
 
             handleLoading(ped, index)
-            addTime(Config.Formulas.additionalTimeForPickup(getDistance(gameData.hospitalPosition, ped.coords)))
+            addTime(Config.Formulas.additionalTimeForPickup(getDistance(ped.coords, gameData.hospitalLocation)))
             updateMarkersAndBlips()
             Overlay.Update(gameData)
 
@@ -285,12 +295,11 @@ function waitUntilPatientInAmbulance(ped)
 end
 
 function setupLevel()
-    local locations = Map.shuffle(gameData.hospitalLocation.spawnPoints)
-    locations = Map.filter(locations, function(location, index) return index <= gameData.level end)
-
-    Map.forEach(locations, function(location)
-        table.insert(gameData.peds, Peds.CreateRandomPedInArea(location))
-    end)
+    gameData.peds = Stream.of(gameData.hospitalLocation.spawnPoints)
+        .shuffle()
+        .filter(function(location, index) return index <= gameData.level end)
+        .map(Peds.CreateRandomPedInArea)
+        .collect()
 
     updateMarkersAndBlips()
 
@@ -305,7 +314,7 @@ function setupLevel()
 end
 
 function getDistance(coords1, coords2)
-    return GetDistanceBetweenCoords(coords1, coords2.x, coords2.y, coords2.z, true)
+    return GetDistanceBetweenCoords(vector3(coords1.x, coords1.y, coords1.z), coords2.x, coords2.y, coords2.z, false)
 end
 
 function displayMessageAndWaitUntilStopped(notificationMessage)
@@ -326,9 +335,9 @@ function findFirstFreeSeat()
 end
 
 function updateMarkersAndBlips()
-    local coordsList = Map.map(gameData.peds, function(ped)
-        return ped.coords
-    end)
+    local coordsList = Stream.of(gameData.peds)
+        .map(function(ped) return ped.coords end)
+        .collect()
 
     Blips.UpdateBlips(coordsList)
     Markers.UpdateMarkers(coordsList)
