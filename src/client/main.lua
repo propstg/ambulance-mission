@@ -6,7 +6,7 @@ local SERVER_EVENT = 'blargleambulance:finishLevel'
 
 local AMBULANCE_HASH = Wrapper.GetHashKey('Ambulance')
 
-local playerData = {
+playerData = {
     ped = nil,
     position = nil,
     vehicle = nil,
@@ -15,7 +15,7 @@ local playerData = {
     isPlayerDead = false,
 }
 
-local gameData = {
+gameData = {
     isPlaying = false,
     level = 1,
     peds = {}, -- {{model: model, coords: coords}}
@@ -326,7 +326,7 @@ end
 
 function findFirstFreeSeat()
     for i = 1, Config.MaxPatientsPerTrip do
-        if IsVehicleSeatFree(playerData.vehicle, i) then
+        if Wrapper.IsVehicleSeatFree(playerData.vehicle, i) then
             return i
         end
     end
@@ -348,5 +348,5 @@ function updateMarkersAndBlips()
 end
 
 function playSound(sound)
-    PlaySoundFrontend(-1, sound.audioName, sound.audioRef, 1)
+    Wrapper.PlaySoundFrontend(-1, sound.audioName, sound.audioRef, 1)
 end
