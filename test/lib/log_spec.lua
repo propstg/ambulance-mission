@@ -1,13 +1,16 @@
+local mockagne = require 'mockagne'
+local verify = mockagne.verify
+local verifyNoCall = mockagne.verify_no_call
+
 describe('log', function()
 
-    local printSpy
-
     setup(function()
+        _G.unpack = table.unpack
         require('../../src/lib/log')
     end)
 
     before_each(function()
-        printSpy = spy.on(_G, 'print')
+        _G.Wrapper = mockagne.getMock()
     end)
 
     it('debug calls print when Config.DebugLog is true', function()
@@ -15,8 +18,7 @@ describe('log', function()
 
         Log.debug('Test')
 
-        assert.spy(printSpy).was.called()
-        assert.spy(printSpy).was_called_with('Test')
+        verify(_G.Wrapper.print('Test'))
     end)
 
     it('debug does not call print when Config.DebugLog is false', function()
@@ -24,6 +26,6 @@ describe('log', function()
 
         Log.debug('Test')
 
-        assert.spy(printSpy).was_not_called()
+        verifyNoCall(_G.Wrapper.print('Test'))
     end)
 end)
