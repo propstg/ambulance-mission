@@ -2,7 +2,6 @@ local mockagne = require 'mockagne'
 local when = mockagne.when
 local any = mockagne.any
 local verify = mockagne.verify
-local verifyNoCall = mockagne.verify_no_call
 
 describe('client - peds', function()
 
