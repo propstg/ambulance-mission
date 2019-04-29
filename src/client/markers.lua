@@ -9,10 +9,10 @@ function Markers.StartMarkers(hospitalMarker)
     Markers.showMarkers = true
     Markers.hospitalMarkerPosition = hospitalMarker
 
-    Citizen.CreateThread(function ()
+    Citizen.CreateThread(function()
         while Markers.showMarkers do
             Citizen.Wait(10)
-    
+
             Stream.of(Markers.markerPositions).forEach(Markers.drawPedMarker)
 
             if Markers.showHospital then
@@ -57,7 +57,7 @@ function Markers.drawHospitalMarker(coords)
 end
 
 function Markers.drawMarker(coords, type, yRot, scaleY, zOffset, bobUpAndDown)
-    DrawMarker(type,        -- type
+    Wrapper.DrawMarker(type,-- type
         coords.x,           -- posX
         coords.y,           -- posY
         coords.z + zOffset, -- posZ

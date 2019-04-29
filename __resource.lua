@@ -4,25 +4,27 @@ description 'Blarglebottoms Ambulance Mission'
 
 server_scripts {
     '@es_extended/locale.lua',
+    'src/lib/wrapper.lua',
     'config.lua',
     'locales/en.lua',
-    'server/main.lua'
+    'src/server/main.lua'
 }
 
 ui_page 'html/index.html'
 
 client_scripts {
     '@es_extended/locale.lua',
+    'src/lib/wrapper.lua',
     'config.lua',
     'locales/en.lua',
-    'client/stream.lua',
-    'client/log.lua',
-    'client/blips.lua',
-    'client/markers.lua',
-    'client/peds.lua',
-    'client/overlay.lua',
-    'client/scaleform.lua',
-    'client/main.lua'
+    'src/lib/stream.lua',
+    'src/lib/log.lua',
+    'src/client/blips.lua',
+    'src/client/markers.lua',
+    'src/client/peds.lua',
+    'src/client/overlay.lua',
+    'src/client/scaleform.lua',
+    'src/client/main.lua'
 }
 
 files {

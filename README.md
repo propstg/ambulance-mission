@@ -20,6 +20,22 @@ git clone https://github.com/propstg/ambulance-mission.git [esx]/ambulance-missi
 start ambulance-mission
 ```
 
+## Developing
+
+### Unit Testing
+
+#### setting up for unit testing (linux)
+```
+sudo apt-get install lua5.3 liblua5.3-dev luarocks
+sudo luarocks install busted
+sudo luarocks install mockagne
+```
+
+#### running unit tests
+```
+~/ambulance-mission $ busted test/
+```
+
 # Legal
 ### License
 ambulance-mission

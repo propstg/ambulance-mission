@@ -2,7 +2,7 @@ Peds = {}
 Peds.modelsHashUsedByPedCount = {}
 
 function Peds.CreateRandomPedInArea(coords)
-    local modelName = Peds.LoadModel(Peds.RandomlySelectModel())
+    local modelName = Peds.loadModel(Peds.randomlySelectModel())
 
     local x = coords.x + math.random() * 4 - 2
     local y = coords.y + math.random() * 4 - 2
@@ -10,8 +10,8 @@ function Peds.CreateRandomPedInArea(coords)
     local pedDamagePack = Config.PedDamagePacks[math.random(#Config.PedDamagePacks)]
     
     local ped = CreatePed(4, modelName, x, y, coords.z, heading, true, false)
-    ApplyPedDamagePack(ped, pedDamagePack, 100.0, 100.0)
-    Peds.WanderInArea(ped, coords)
+    Wrapper.ApplyPedDamagePack(ped, pedDamagePack, 100.0, 100.0)
+    Peds.wanderInArea(ped, coords)
     Peds.incrementModelsHashUsedByPedCount(modelName)
 
     return {
@@ -20,8 +20,8 @@ function Peds.CreateRandomPedInArea(coords)
     }
 end
 
-function Peds.WanderInArea(ped, stopCoords)
-    TaskWanderInArea(ped, 
+function Peds.wanderInArea(ped, stopCoords)
+    Wrapper.TaskWanderInArea(ped, 
         stopCoords.x,
         stopCoords.y,
         stopCoords.z,
@@ -33,7 +33,7 @@ end
 
 function Peds.EnterVehicle(ped, vehicle, seatNumber)
     Citizen.Wait(10)
-    TaskEnterVehicle(ped, 
+    Wrapper.TaskEnterVehicle(ped, 
         vehicle, 
         Config.EnterVehicleTimeout, -- timeout
         seatNumber,                 -- seat
@@ -44,26 +44,26 @@ function Peds.EnterVehicle(ped, vehicle, seatNumber)
 end
 
 function Peds.IsPedInVehicleOrTooFarAway(ped, position)
-    if IsPedInAnyVehicle(ped, false) then
+    if Wrapper.IsPedInAnyVehicle(ped, false) then
         return true
     end
 
-    return GetDistanceBetweenCoords(GetEntityCoords(ped), position.x, position.y, position.z) > 15
+    return Wrapper.GetDistanceBetweenCoords(Wrapper.GetEntityCoords(ped), position.x, position.y, position.z) > 15
 end
 
-function Peds.LoadModel(modelName)
+function Peds.loadModel(modelName)
     local loadAttempts = 0
-    local hashKey = GetHashKey(modelName)
+    local hashKey = Wrapper.GetHashKey(modelName)
 
-    RequestModel(hashKey)
-    while not HasModelLoaded(hashKey) and loadAttempts < 10 do
+    Wrapper.RequestModel(hashKey)
+    while not Wrapper.HasModelLoaded(hashKey) and loadAttempts < 10 do
         loadAttempts = loadAttempts + 1
         Citizen.Wait(50)
     end
 
     if loadAttempts == 10 then
         Log.debug('MODEL NOT LOADED AFTER TEN ATTEMPTS: ' .. modelName)
-        return Peds.LoadModel(Peds.RandomlySelectModel())
+        return Peds.loadModel(Peds.randomlySelectModel())
     end
 
     Log.debug('Successfully loaded model: ' .. modelName)
@@ -72,23 +72,23 @@ end
 
 function Peds.DeletePeds(pedList)
     while #pedList > 0 do
-        Peds.DeletePed(table.remove(pedList))
+        Peds.deletePed(table.remove(pedList))
         Citizen.Wait(10)
     end
 end
 
-function Peds.DeletePed(ped)
-    Peds.HandleUnloadingModelIfNeeded(ped)
-    SetEntityAsNoLongerNeeded(ped)
-    DeletePed(ped)
+function Peds.deletePed(ped)
+    Peds.handleUnloadingModelIfNeeded(ped)
+    Wrapper.SetEntityAsNoLongerNeeded(ped)
+    Wrapper.DeletePed(ped)
 end
 
-function Peds.RandomlySelectModel()
+function Peds.randomlySelectModel()
     return Config.PedModels[math.random(#Config.PedModels)]
 end
 
 function Peds.incrementModelsHashUsedByPedCount(modelName)
-    local hashKey = GetHashKey(modelName)
+    local hashKey = Wrapper.GetHashKey(modelName)
 
     local value = Peds.modelsHashUsedByPedCount[hashKey]
     if value == nil then value = 0 end
@@ -96,17 +96,17 @@ function Peds.incrementModelsHashUsedByPedCount(modelName)
     Peds.modelsHashUsedByPedCount[hashKey] = value + 1
 end
 
+function Peds.handleUnloadingModelIfNeeded(pedToDelete)
+    local hashKey = Wrapper.GetEntityModel(pedToDelete)
+    Peds.decrementModelsHashUsedByPedCount(hashKey)
+    if Peds.modelsHashUsedByPedCount[hashKey] <= 0 then
+        Wrapper.SetModelAsNoLongerNeeded(hashKey)
+    end
+end
+
 function Peds.decrementModelsHashUsedByPedCount(hashKey)
     local value = Peds.modelsHashUsedByPedCount[hashKey]
     if value == nil then value = 1 end
 
     Peds.modelsHashUsedByPedCount[hashKey] = value - 1
-end
-
-function Peds.HandleUnloadingModelIfNeeded(pedToDelete)
-    local hashKey = GetEntityModel(pedToDelete)
-    Peds.decrementModelsHashUsedByPedCount(hashKey)
-    if Peds.modelsHashUsedByPedCount[hashKey] <= 0 then
-        SetModelAsNoLongerNeeded(hashKey)
-    end
 end
