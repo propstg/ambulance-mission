@@ -17,6 +17,7 @@ end
 
 function Overlay.Stop()
     Overlay.isVisible = false
+    Overlay.wasPaused = false
     Overlay.SendChangeVisibilityMessage(false)
 end
 
@@ -30,7 +31,7 @@ function Overlay.Start(gameData)
         while Overlay.isVisible do
             Citizen.Wait(250)
 
-            local isPaused = IsPauseMenuActive()
+            local isPaused = Wrapper.IsPauseMenuActive()
 
             if isPaused ~= Overlay.wasPaused then
                 Overlay.SendChangeVisibilityMessage(not isPaused)
@@ -68,5 +69,5 @@ function Overlay.SendChangeVisibilityMessage(visible)
 end
 
 function Overlay.SendMessage(message)
-    SendNuiMessage(json.encode(message))
+    Wrapper.SendNuiMessage(Wrapper.jsonEncode(message))
 end
