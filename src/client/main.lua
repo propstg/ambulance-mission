@@ -4,7 +4,7 @@ local TERMINATE_GAME_EVENT = 'blargleambulance:terminateGame'
 local START_GAME_EVENT = 'blargleambulance:startGame'
 local SERVER_EVENT = 'blargleambulance:finishLevel'
 
-local AMBULANCE_HASH = GetHashKey('Ambulance')
+local AMBULANCE_HASH = Wrapper.GetHashKey('Ambulance')
 
 local playerData = {
     ped = nil,
@@ -132,7 +132,7 @@ function handleAmbulanceDamageDetection()
     gameData.lastVehicleHealth = vehicleHealth
 end
 
-AddEventHandler(TERMINATE_GAME_EVENT, function(reasonForTerminating, failed)
+Wrapper.AddEventHandler(TERMINATE_GAME_EVENT, function(reasonForTerminating, failed)
     if failed then
         Scaleform.ShowWasted(_('terminate_failed'), reasonForTerminating, 5)
         playSound(Config.Sounds.failedMission)
@@ -150,7 +150,7 @@ AddEventHandler(TERMINATE_GAME_EVENT, function(reasonForTerminating, failed)
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
 end)
 
-AddEventHandler(START_GAME_EVENT, function()
+Wrapper.AddEventHandler(START_GAME_EVENT, function()
     gameData.hospitalLocation = findNearestHospital(playerData.position)
     gameData.secondsLeft = Config.InitialSeconds
     gameData.level = 1

@@ -32,8 +32,9 @@ sudo luarocks install mockagne
 ```
 
 #### running unit tests
+The `runTests.sh` script will run the tests with `busted`, run `luacov` to generate the coverage report, and then print the coverage summary.
 ```
-~/ambulance-mission $ busted test/
+~/ambulance-mission $ ./runTests.sh
 ```
 
 # Legal
