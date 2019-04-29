@@ -9,7 +9,7 @@ function Peds.CreateRandomPedInArea(coords)
     local heading = math.random() * 360
     local pedDamagePack = Config.PedDamagePacks[math.random(#Config.PedDamagePacks)]
     
-    local ped = CreatePed(4, modelName, x, y, coords.z, heading, true, false)
+    local ped = Wrapper.CreatePed(4, modelName, x, y, coords.z, heading, true, false)
     Wrapper.ApplyPedDamagePack(ped, pedDamagePack, 100.0, 100.0)
     Peds.wanderInArea(ped, coords)
     Peds.incrementModelsHashUsedByPedCount(modelName)

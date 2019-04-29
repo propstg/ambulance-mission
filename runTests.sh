@@ -7,3 +7,5 @@ luacov src/
 
 printf '\nCoverage '
 awk '/Summary/,/Total/' luacov.report.out
+
+printf '\nView luacov.report.out for detailed coverage information.\n\n'
