@@ -25,4 +25,5 @@ Locales['en'] = {
     ['overlay_time_left_label'] =           'Time',
     ['overlay_empty_seats_label'] =         'Empty Seats',
     ['overlay_patients_left_label'] =       'Patients Left',
+    ['coordinates_too_far'] =               'Spawn point too far from hospital! Hospital %s, spawn location %.3f, %.3f, %.3f. Max expected is %d, but this spawn point is %.3f'
 }

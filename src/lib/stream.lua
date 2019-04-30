@@ -20,7 +20,7 @@ function Stream.of(array)
         for index, v in pairs(array) do
             table.insert(returnTable, func(v, index))
         end
-        
+
         return Stream.of(returnTable)
     end
 

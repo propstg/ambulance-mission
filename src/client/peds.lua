@@ -8,7 +8,7 @@ function Peds.CreateRandomPedInArea(coords)
     local y = coords.y + math.random() * 4 - 2
     local heading = math.random() * 360
     local pedDamagePack = Config.PedDamagePacks[math.random(#Config.PedDamagePacks)]
-    
+
     local ped = Wrapper.CreatePed(4, modelName, x, y, coords.z, heading, true, false)
     Wrapper.ApplyPedDamagePack(ped, pedDamagePack, 100.0, 100.0)
     Peds.wanderInArea(ped, coords)
@@ -21,7 +21,7 @@ function Peds.CreateRandomPedInArea(coords)
 end
 
 function Peds.wanderInArea(ped, stopCoords)
-    Wrapper.TaskWanderInArea(ped, 
+    Wrapper.TaskWanderInArea(ped,
         stopCoords.x,
         stopCoords.y,
         stopCoords.z,
@@ -33,8 +33,8 @@ end
 
 function Peds.EnterVehicle(ped, vehicle, seatNumber)
     Citizen.Wait(10)
-    Wrapper.TaskEnterVehicle(ped, 
-        vehicle, 
+    Wrapper.TaskEnterVehicle(ped,
+        vehicle,
         Config.EnterVehicleTimeout, -- timeout
         seatNumber,                 -- seat
         2.0,                        -- speed (run)

@@ -38,7 +38,8 @@ function checkForTypoedSpawnPointCoordinates()
         for _, location in pairs(hospital.spawnPoints) do
             local distance = getDistance(hospital, location)
             if distance > Config.MaxSpawnPointDistanceAllowedFromHospital then
-                Log.debug(string.format('Coordinate too far from hospital! Hospital %s, spawn location %.3f, %.3f, %.3f. Max expected is %d, but this spawn point is %.3f', hospital.name, location.x, location.y, location.z, Config.MaxSpawnPointDistanceAllowedFromHospital, distance))
+                Log.debug(Wrapper._('coordinates_too_far', hospital.name, location.x, location.y, location.z,
+                    Config.MaxSpawnPointDistanceAllowedFromHospital, distance))
             end
         end
     end
@@ -77,16 +78,7 @@ function mainLoop()
         local newPlayerData = gatherData()
 
         if gameData.isPlaying then
-            if not newPlayerData.isInAmbulance then
-                Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_left_ambulance'), true)
-            elseif not newPlayerData.isAmbulanceDriveable then
-                Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_destroyed_ambulance'), true)
-            elseif newPlayerData.isPlayerDead then
-                Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_you_died'), true)
-            elseif areAnyPatientsDead() then
-                Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_patient_died'), true)
-            end
-
+            handleGameEndingConditionsIfNeeded(newPlayerData)
             handleAmbulanceDamageDetection()
         elseif not playerData.isInAmbulance and newPlayerData.isInAmbulance then
             ESX.ShowHelpNotification(Wrapper._('start_game_help'))
@@ -117,6 +109,18 @@ function gatherData()
     end
 
     return newPlayerData
+end
+
+function handleGameEndingConditionsIfNeeded(newPlayerData)
+    if not newPlayerData.isInAmbulance then
+        Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_left_ambulance'), true)
+    elseif not newPlayerData.isAmbulanceDriveable then
+        Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_destroyed_ambulance'), true)
+    elseif newPlayerData.isPlayerDead then
+        Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_you_died'), true)
+    elseif areAnyPatientsDead() then
+        Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_patient_died'), true)
+    end
 end
 
 function areAnyPatientsDead()
@@ -162,7 +166,7 @@ function startGame()
     gameData.pedsInAmbulance = {}
     gameData.lastVehicleHealth = Wrapper.GetVehicleBodyHealth(playerData.vehicle)
     gameData.isPlaying = true
-    
+
     Overlay.Start(gameData)
     Markers.StartMarkers(gameData.hospitalLocation)
     Blips.StartBlips(gameData.hospitalLocation)
@@ -263,9 +267,11 @@ function handlePatientPickUps()
             Overlay.Update(gameData)
 
             if #gameData.pedsInAmbulance >= Config.MaxPatientsPerTrip then
-                Scaleform.ShowMessage(Wrapper._('return_to_hospital_header'), Wrapper._('return_to_hospital_sub_full'), 5)
+                Scaleform.ShowMessage(Wrapper._('return_to_hospital_header'),
+                    Wrapper._('return_to_hospital_sub_full'), 5)
             elseif #gameData.peds == 0 then
-                Scaleform.ShowMessage(Wrapper._('return_to_hospital_header'), Wrapper._('return_to_hospital_sub_end_level'), 5)
+                Scaleform.ShowMessage(Wrapper._('return_to_hospital_header'),
+                    Wrapper._('return_to_hospital_sub_end_level'), 5)
             end
 
             return
@@ -305,24 +311,25 @@ end
 function setupLevel()
     gameData.peds = Stream.of(gameData.hospitalLocation.spawnPoints)
         .shuffle()
-        .filter(function(location, index) return index <= gameData.level end)
+        .filter(function(_, index) return index <= gameData.level end)
         .map(Peds.CreateRandomPedInArea)
         .collect()
 
     updateMarkersAndBlips()
 
-    local subMessage = ''
+    local subMessage
     if gameData.level == 1 then
         subMessage = Wrapper._('start_level_sub_one')
     else
         subMessage = Wrapper._('start_level_sub_multi', gameData.level)
     end
-    
+
     Scaleform.ShowMessage(Wrapper._('start_level_header', gameData.level), subMessage, 5)
 end
 
 function getDistance(coords1, coords2)
-    return Wrapper.GetDistanceBetweenCoords(Wrapper.vector3(coords1.x, coords1.y, coords1.z), coords2.x, coords2.y, coords2.z, false)
+    return Wrapper.GetDistanceBetweenCoords(Wrapper.vector3(coords1.x, coords1.y, coords1.z),
+        coords2.x, coords2.y, coords2.z, false)
 end
 
 function displayMessageAndWaitUntilStopped(notificationMessage)

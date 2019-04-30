@@ -67,14 +67,19 @@ describe('client - main', function()
         _G.Config.MaxSpawnPointDistanceAllowedFromHospital = 20
         _G.Config.Hospitals = {gameData.hospitalLocation}
         when(_G.Wrapper.GetDistanceBetweenCoords(any(), any(), any(), any(), false)).thenAnswer(25)
+        when(_G.Wrapper._('coordinates_too_far', 'hospital name', 1, 2, 3, 20, 25)).thenAnswer('coordinates too far spawn point 1 translated')
+        when(_G.Wrapper._('coordinates_too_far', 'hospital name', 2, 3, 4, 20, 25)).thenAnswer('coordinates too far spawn point 2 translated')
+        when(_G.Wrapper._('coordinates_too_far', 'hospital name', 3, 4, 5, 20, 25)).thenAnswer('coordinates too far spawn point 3 translated')
+        when(_G.Wrapper._('coordinates_too_far', 'hospital name', 4, 5, 6, 20, 25)).thenAnswer('coordinates too far spawn point 4 translated')
+        when(_G.Wrapper._('coordinates_too_far', 'hospital name', 5, 6, 7, 20, 25)).thenAnswer('coordinates too far spawn point 5 translated')
 
         checkForTypoedSpawnPointCoordinates()
 
-        verify(_G.Log.debug('Coordinate too far from hospital! Hospital hospital name, spawn location 1.000, 2.000, 3.000. Max expected is 20, but this spawn point is 25.000'))
-        verify(_G.Log.debug('Coordinate too far from hospital! Hospital hospital name, spawn location 2.000, 3.000, 4.000. Max expected is 20, but this spawn point is 25.000'))
-        verify(_G.Log.debug('Coordinate too far from hospital! Hospital hospital name, spawn location 3.000, 4.000, 5.000. Max expected is 20, but this spawn point is 25.000'))
-        verify(_G.Log.debug('Coordinate too far from hospital! Hospital hospital name, spawn location 4.000, 5.000, 6.000. Max expected is 20, but this spawn point is 25.000'))
-        verify(_G.Log.debug('Coordinate too far from hospital! Hospital hospital name, spawn location 5.000, 6.000, 7.000. Max expected is 20, but this spawn point is 25.000'))
+        verify(_G.Log.debug('coordinates too far spawn point 1 translated'))
+        verify(_G.Log.debug('coordinates too far spawn point 2 translated'))
+        verify(_G.Log.debug('coordinates too far spawn point 3 translated'))
+        verify(_G.Log.debug('coordinates too far spawn point 4 translated'))
+        verify(_G.Log.debug('coordinates too far spawn point 5 translated'))
     end)
 
     it('controlLoop - control not pressed, just loops', function()
