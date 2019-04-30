@@ -29,16 +29,16 @@ Citizen.CreateThread(function()
     checkForTypoedSpawnPointCoordinates()
     waitForEsxInitialization()
     Overlay.Init()
-    controlLoop()
+    startControlLoop()
     mainLoop()
 end)
 
 function checkForTypoedSpawnPointCoordinates()
     for _, hospital in pairs(Config.Hospitals) do
         for _, location in pairs(hospital.spawnPoints) do
-            local distance = GetDistanceBetweenCoords(vector3(hospital.x, hospital.y, hospital.z), location.x, location.y, location.z)
+            local distance = getDistance(hospital, location)
             if distance > Config.MaxSpawnPointDistanceAllowedFromHospital then
-                print(string.format('Coordinate too far from hospital! Hospital %s, spawn location %.3f, %.3f, %.3f. Max expected is %d, but this spawn point is %.3f', hospital.name, location.x, location.y, location.z, Config.MaxSpawnPointDistanceAllowedFromHospital, distance))
+                Log.debug(string.format('Coordinate too far from hospital! Hospital %s, spawn location %.3f, %.3f, %.3f. Max expected is %d, but this spawn point is %.3f', hospital.name, location.x, location.y, location.z, Config.MaxSpawnPointDistanceAllowedFromHospital, distance))
             end
         end
     end
@@ -46,28 +46,30 @@ end
 
 function waitForEsxInitialization()
     while ESX == nil do
-        TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
+        Wrapper.TriggerEvent('esx:getSharedObject', setEsx)
         Citizen.Wait(0)
     end
 end
 
-function controlLoop()
-    Citizen.CreateThread(function()
-        while true do
-            if IsControlJustPressed(1, Config.ActivationKey) then
-                if gameData.isPlaying then
-                    TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_requested'), true)
-                    Citizen.Wait(5000)
-                elseif playerData.isInAmbulance then
-                    TriggerEvent(START_GAME_EVENT)
-                    ESX.ShowHelpNotification(_('stop_game_help'))
-                    Citizen.Wait(5000)
-                end
-            end
+function startControlLoop()
+    Citizen.CreateThread(controlLoop)
+end
 
-            Citizen.Wait(5)
+function controlLoop()
+    while true do
+        if Wrapper.IsControlJustPressed(1, Config.ActivationKey) then
+            if gameData.isPlaying then
+                Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_requested'), true)
+                Citizen.Wait(5000)
+            elseif playerData.isInAmbulance then
+                Wrapper.TriggerEvent(START_GAME_EVENT)
+                ESX.ShowHelpNotification(Wrapper._('stop_game_help'))
+                Citizen.Wait(5000)
+            end
         end
-    end)
+
+        Citizen.Wait(5)
+    end
 end
 
 function mainLoop()
@@ -76,18 +78,18 @@ function mainLoop()
 
         if gameData.isPlaying then
             if not newPlayerData.isInAmbulance then
-                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_left_ambulance'), true)
+                Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_left_ambulance'), true)
             elseif not newPlayerData.isAmbulanceDriveable then
-                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_destroyed_ambulance'), true)
+                Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_destroyed_ambulance'), true)
             elseif newPlayerData.isPlayerDead then
-                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_you_died'), true)
+                Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_you_died'), true)
             elseif areAnyPatientsDead() then
-                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_patient_died'), true)
+                Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_patient_died'), true)
             end
 
             handleAmbulanceDamageDetection()
         elseif not playerData.isInAmbulance and newPlayerData.isInAmbulance then
-            ESX.ShowHelpNotification(_('start_game_help'))
+            ESX.ShowHelpNotification(Wrapper._('start_game_help'))
         end
 
         playerData = newPlayerData
@@ -98,19 +100,19 @@ end
 
 function gatherData()
     local newPlayerData = {}
-    newPlayerData.ped = PlayerPedId()
-    newPlayerData.position = GetEntityCoords(playerData.ped)
-    newPlayerData.vehicle = GetVehiclePedIsIn(playerData.ped, false)
-    newPlayerData.isPlayerDead = IsPedDeadOrDying(newPlayerData.ped, true)
+    newPlayerData.ped = Wrapper.PlayerPedId()
+    newPlayerData.position = Wrapper.GetEntityCoords(newPlayerData.ped)
+    newPlayerData.vehicle = Wrapper.GetVehiclePedIsIn(newPlayerData.ped, false)
+    newPlayerData.isPlayerDead = Wrapper.IsPedDeadOrDying(newPlayerData.ped, true)
 
     newPlayerData.isInAmbulance = false
     newPlayerData.isAmbulanceDriveable = false
 
     if newPlayerData.vehicle ~= nil then
-        newPlayerData.isInAmbulance = IsVehicleModel(newPlayerData.vehicle, AMBULANCE_HASH)
+        newPlayerData.isInAmbulance = Wrapper.IsVehicleModel(newPlayerData.vehicle, AMBULANCE_HASH)
 
         if newPlayerData.isInAmbulance then
-            newPlayerData.isAmbulanceDriveable = IsVehicleDriveable(newPlayerData.vehicle, true)
+            newPlayerData.isAmbulanceDriveable = Wrapper.IsVehicleDriveable(newPlayerData.vehicle, true)
         end
     end
 
@@ -119,11 +121,11 @@ end
 
 function areAnyPatientsDead()
     return Stream.of(gameData.peds)
-        .anyMatch(function(patient) return IsPedDeadOrDying(patient.model, 1) end)
+        .anyMatch(function(patient) return Wrapper.IsPedDeadOrDying(patient.model, 1) end)
 end
 
 function handleAmbulanceDamageDetection()
-    local vehicleHealth = GetVehicleBodyHealth(playerData.vehicle)
+    local vehicleHealth = Wrapper.GetVehicleBodyHealth(playerData.vehicle)
 
     if #gameData.pedsInAmbulance > 0 and vehicleHealth < gameData.lastVehicleHealth then
         addTime(Config.Formulas.timeLostForDamage(vehicleHealth - gameData.lastVehicleHealth))
@@ -132,9 +134,10 @@ function handleAmbulanceDamageDetection()
     gameData.lastVehicleHealth = vehicleHealth
 end
 
-Wrapper.AddEventHandler(TERMINATE_GAME_EVENT, function(reasonForTerminating, failed)
+Wrapper.AddEventHandler(TERMINATE_GAME_EVENT, terminateGame)
+function terminateGame(reasonForTerminating, failed)
     if failed then
-        Scaleform.ShowWasted(_('terminate_failed'), reasonForTerminating, 5)
+        Scaleform.ShowWasted(Wrapper._('terminate_failed'), reasonForTerminating, 5)
         playSound(Config.Sounds.failedMission)
     else
         Scaleform.ShowPassed()
@@ -148,15 +151,16 @@ Wrapper.AddEventHandler(TERMINATE_GAME_EVENT, function(reasonForTerminating, fai
 
     Peds.DeletePeds(mapPedsToModel(gameData.peds))
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
-end)
+end
 
-Wrapper.AddEventHandler(START_GAME_EVENT, function()
+Wrapper.AddEventHandler(START_GAME_EVENT, startGame)
+function startGame()
     gameData.hospitalLocation = findNearestHospital(playerData.position)
     gameData.secondsLeft = Config.InitialSeconds
     gameData.level = 1
     gameData.peds = {}
     gameData.pedsInAmbulance = {}
-    gameData.lastVehicleHealth = GetVehicleBodyHealth(playerData.vehicle)
+    gameData.lastVehicleHealth = Wrapper.GetVehicleBodyHealth(playerData.vehicle)
     gameData.isPlaying = true
     
     Overlay.Start(gameData)
@@ -165,7 +169,7 @@ Wrapper.AddEventHandler(START_GAME_EVENT, function()
     setupLevel()
     startGameLoop()
     startTimerThread()
-end)
+end
 
 function findNearestHospital(playerPosition)
     local coordsOfNearest = Config.Hospitals[1]
@@ -185,33 +189,37 @@ function findNearestHospital(playerPosition)
 end
 
 function startTimerThread()
-    Citizen.CreateThread(function()
-        while gameData.isPlaying do
-            if gameData.secondsLeft <= 0 then
-                TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_out_of_time'), true)
-            end
+    Citizen.CreateThread(timerLoop)
+end
 
-            Overlay.Update(gameData)
-
-            Citizen.Wait(1000)
-
-            gameData.secondsLeft = gameData.secondsLeft - 1
+function timerLoop()
+    while gameData.isPlaying do
+        if gameData.secondsLeft <= 0 then
+            Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_out_of_time'), true)
         end
-    end)
+
+        Overlay.Update(gameData)
+
+        Citizen.Wait(1000)
+
+        gameData.secondsLeft = gameData.secondsLeft - 1
+    end
 end
 
 function startGameLoop()
-    Citizen.CreateThread(function()
-        while gameData.isPlaying do
-            if getDistance(playerData.position, gameData.hospitalLocation) <= 10.0 and #gameData.pedsInAmbulance > 0 then
-                handlePatientDropOff()
-            else
-                handlePatientPickUps()
-            end
+    Citizen.CreateThread(gameLoop)
+end
 
-            Citizen.Wait(500)
+function gameLoop()
+    while gameData.isPlaying do
+        if getDistance(playerData.position, gameData.hospitalLocation) <= 10.0 and #gameData.pedsInAmbulance > 0 then
+            handlePatientDropOff()
+        else
+            handlePatientPickUps()
         end
-    end)
+
+        Citizen.Wait(500)
+    end
 end
 
 function handlePatientDropOff()
@@ -224,10 +232,10 @@ function handlePatientDropOff()
 
     if #gameData.peds == 0 then
         gameData.secondsLeft = Config.InitialSeconds
-        TriggerServerEvent(SERVER_EVENT, gameData.level)
+        Wrapper.TriggerServerEvent(SERVER_EVENT, gameData.level)
 
         if gameData.level == Config.MaxLevels then
-            TriggerEvent(TERMINATE_GAME_EVENT, _('terminate_finished'), false)
+            Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_finished'), false)
         else
             playSound(Config.Sounds.timeAdded)
             gameData.level = gameData.level + 1
@@ -255,9 +263,9 @@ function handlePatientPickUps()
             Overlay.Update(gameData)
 
             if #gameData.pedsInAmbulance >= Config.MaxPatientsPerTrip then
-                Scaleform.ShowMessage(_('return_to_hospital_header'), _('return_to_hospital_sub_full'), 5)
+                Scaleform.ShowMessage(Wrapper._('return_to_hospital_header'), Wrapper._('return_to_hospital_sub_full'), 5)
             elseif #gameData.peds == 0 then
-                Scaleform.ShowMessage(_('return_to_hospital_header'), _('return_to_hospital_sub_end_level'), 5)
+                Scaleform.ShowMessage(Wrapper._('return_to_hospital_header'), Wrapper._('return_to_hospital_sub_end_level'), 5)
             end
 
             return
@@ -269,10 +277,10 @@ function addTime(timeToAdd)
     gameData.secondsLeft = gameData.secondsLeft + timeToAdd
 
     if timeToAdd > 0 then
-        Scaleform.ShowAddTime(_('time_added', timeToAdd))
+        Scaleform.ShowAddTime(Wrapper._('time_added', timeToAdd))
         playSound(Config.Sounds.timeAdded)
     elseif timeToAdd < 0 then
-        Scaleform.ShowRemoveTime(_('time_added', timeToAdd))
+        Scaleform.ShowRemoveTime(Wrapper._('time_added', timeToAdd))
         playSound(Config.Sounds.timeRemoved)
     end
 end
@@ -305,21 +313,21 @@ function setupLevel()
 
     local subMessage = ''
     if gameData.level == 1 then
-        subMessage = _('start_level_sub_one')
+        subMessage = Wrapper._('start_level_sub_one')
     else
-        subMessage = _('start_level_sub_multi', gameData.level)
+        subMessage = Wrapper._('start_level_sub_multi', gameData.level)
     end
     
-    Scaleform.ShowMessage(_('start_level_header', gameData.level), subMessage, 5)
+    Scaleform.ShowMessage(Wrapper._('start_level_header', gameData.level), subMessage, 5)
 end
 
 function getDistance(coords1, coords2)
-    return GetDistanceBetweenCoords(vector3(coords1.x, coords1.y, coords1.z), coords2.x, coords2.y, coords2.z, false)
+    return Wrapper.GetDistanceBetweenCoords(Wrapper.vector3(coords1.x, coords1.y, coords1.z), coords2.x, coords2.y, coords2.z, false)
 end
 
 function displayMessageAndWaitUntilStopped(notificationMessage)
-    while gameData.isPlaying and not IsVehicleStopped(playerData.vehicle) do
-        ESX.ShowNotification(_(notificationMessage))
+    while gameData.isPlaying and not Wrapper.IsVehicleStopped(playerData.vehicle) do
+        ESX.ShowNotification(Wrapper._(notificationMessage))
         Citizen.Wait(50)
     end
 end
@@ -349,4 +357,8 @@ end
 
 function playSound(sound)
     Wrapper.PlaySoundFrontend(-1, sound.audioName, sound.audioRef, 1)
+end
+
+function setEsx(obj)
+    ESX = obj
 end
