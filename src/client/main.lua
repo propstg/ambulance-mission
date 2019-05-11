@@ -63,6 +63,7 @@ function controlLoop()
                 Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_requested'), true)
                 Citizen.Wait(5000)
             elseif playerData.isInAmbulance then
+                print('here')
                 Wrapper.TriggerEvent(START_GAME_EVENT)
                 ESX.ShowHelpNotification(Wrapper._('stop_game_help'))
                 Citizen.Wait(5000)
@@ -138,7 +139,6 @@ function handleAmbulanceDamageDetection()
     gameData.lastVehicleHealth = vehicleHealth
 end
 
-Wrapper.AddEventHandler(TERMINATE_GAME_EVENT, terminateGame)
 function terminateGame(reasonForTerminating, failed)
     if failed then
         Scaleform.ShowWasted(Wrapper._('terminate_failed'), reasonForTerminating, 5)
@@ -156,9 +156,10 @@ function terminateGame(reasonForTerminating, failed)
     Peds.DeletePeds(mapPedsToModel(gameData.peds))
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
 end
+Wrapper.AddEventHandler(TERMINATE_GAME_EVENT, terminateGame)
 
-Wrapper.AddEventHandler(START_GAME_EVENT, startGame)
 function startGame()
+    print('here')
     gameData.hospitalLocation = findNearestHospital(playerData.position)
     gameData.secondsLeft = Config.InitialSeconds
     gameData.level = 1
@@ -174,6 +175,7 @@ function startGame()
     startGameLoop()
     startTimerThread()
 end
+Wrapper.AddEventHandler(START_GAME_EVENT, startGame)
 
 function findNearestHospital(playerPosition)
     local coordsOfNearest = Config.Hospitals[1]
