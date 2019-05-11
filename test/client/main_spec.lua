@@ -543,8 +543,10 @@ describe('client - main', function()
         gameData.secondsLeft = 10
         gameData.level = 3
         _G.Config.MaxLevels = 3
+        _G.Config.Formulas.moneyPerLevel = function() return 5 end
         when(_G.Wrapper.IsVehicleStopped('vehicleObject')).thenAnswer(true)
         when(_G.Wrapper._('terminate_finished')).thenAnswer('terminate_finished translated')
+        when(_G.Wrapper._('add_money', 5)).thenAnswer('add_money translated')
 
         handlePatientDropOff()
 
@@ -553,6 +555,7 @@ describe('client - main', function()
         verify(_G.Wrapper.TriggerServerEvent('blargleambulance:finishLevel', 3))
         verify(_G.Wrapper.TriggerEvent('blargleambulance:terminateGame', 'terminate_finished translated', false))
         verifyNoCall(_G.Wrapper.PlaySoundFrontend(any(), any(), any(), any()))
+        verify(_G.Scaleform.ShowAddMoney('add_money translated'))
     end)
 
     it('handlePatientDropOff - no more peds - starts next level when not on last level', function()
@@ -563,7 +566,9 @@ describe('client - main', function()
         gameData.secondsLeft = 10
         gameData.level = 3
         _G.Config.MaxLevels = 5
+        _G.Config.Formulas.moneyPerLevel = function() return 5 end
         when(_G.Wrapper.IsVehicleStopped('vehicleObject')).thenAnswer(true)
+        when(_G.Wrapper._('add_money', 5)).thenAnswer('add_money translated')
 
         handlePatientDropOff()
 
@@ -572,7 +577,7 @@ describe('client - main', function()
         verify(_G.Peds.DeletePeds({'model 1', 'model 2', 'model 3'}))
         verify(_G.Wrapper.TriggerServerEvent('blargleambulance:finishLevel', 3))
         verify(_G.Wrapper.PlaySoundFrontend(-1, 'AudioName added', 'AudioRef added', 1))
-
+        verify(_G.Scaleform.ShowAddMoney('add_money translated'))
     end)
 
     it('mapPedsToModel -- no peds', function()

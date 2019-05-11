@@ -63,7 +63,6 @@ function controlLoop()
                 Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_requested'), true)
                 Citizen.Wait(5000)
             elseif playerData.isInAmbulance then
-                print('here')
                 Wrapper.TriggerEvent(START_GAME_EVENT)
                 ESX.ShowHelpNotification(Wrapper._('stop_game_help'))
                 Citizen.Wait(5000)
@@ -159,7 +158,6 @@ end
 Wrapper.AddEventHandler(TERMINATE_GAME_EVENT, terminateGame)
 
 function startGame()
-    print('here')
     gameData.hospitalLocation = findNearestHospital(playerData.position)
     gameData.secondsLeft = Config.InitialSeconds
     gameData.level = 1
@@ -239,6 +237,7 @@ function handlePatientDropOff()
     if #gameData.peds == 0 then
         gameData.secondsLeft = Config.InitialSeconds
         Wrapper.TriggerServerEvent(SERVER_EVENT, gameData.level)
+        Scaleform.ShowAddMoney(Wrapper._('add_money', Config.Formulas.moneyPerLevel(gameData.level)))
 
         if gameData.level == Config.MaxLevels then
             Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_finished'), false)

@@ -39,6 +39,10 @@ function Scaleform.ShowRemoveTime(time)
     Scaleform.showCountDown(time, 255, 30, 30)
 end
 
+function Scaleform.ShowAddMoney(money)
+    Scaleform.showCountDown(money, 30, 255, 30)
+end
+
 function Scaleform.showCountDown(text, r, g, b)
     Citizen.CreateThread(function()
         local scaleform = Scaleform.loadScaleform('COUNTDOWN')

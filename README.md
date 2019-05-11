@@ -1,5 +1,5 @@
 # ambulance-mission
-A script based on the solo mission to pick up NPC patients and transport them to the hospital.
+A script based on the solo mission to pick up NPC patients and transport them to the hospital. Just get in an ambulance and follow the prompt.
 
 ## Download & Installation
 
