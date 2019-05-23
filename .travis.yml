@@ -1,0 +1,19 @@
+language: c
+sudo: false
+
+env:
+  - LUA="lua=5.3"
+
+before_install:
+  - pip install --user hererocks
+  - hererocks lua_install -r^ --$LUA
+  - export PATH=$PATH:$PWD/lua_install/bin
+
+install:
+  - luarocks install busted
+  - luarocks install mockagne
+  - luarocks install luacov
+  - luarocks install luacheck
+
+script:
+  - ./runTests.sh
