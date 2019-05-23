@@ -20,4 +20,4 @@ script:
   - ./runTests.sh
 
 after_success:
-  - luacov-coveralls -e $TRAVIS_BUILD_DIR/lua_install
+  - luacov-coveralls -i src/ -e $TRAVIS_BUILD_DIR/lua_install
