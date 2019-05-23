@@ -14,6 +14,10 @@ install:
   - luarocks install mockagne
   - luarocks install luacov
   - luarocks install luacheck
+  - luarocks install luacov-coveralls
 
 script:
   - ./runTests.sh
+
+after_success:
+  - luacov-coveralls -i src/ -e $TRAVIS_BUILD_DIR/lua_install

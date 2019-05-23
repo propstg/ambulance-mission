@@ -1,4 +1,6 @@
 # ambulance-mission
+[![Build Status](https://travis-ci.org/propstg/ambulance-mission.svg?branch=master)](https://travis-ci.org/propstg/ambulance-mission) [![Coverage Status](https://coveralls.io/repos/github/propstg/ambulance-mission/badge.svg?branch=master)](https://coveralls.io/github/propstg/ambulance-mission?branch=master)
+
 A script based on the solo mission to pick up NPC patients and transport them to the hospital. Just get in an ambulance and follow the prompt.
 
 ## Download & Installation
