@@ -1,6 +1,7 @@
 Config = {}
 Config.Locale = 'en'
 Config.DebugLog = true
+Config.LimitToAmbulanceJob = false
 
 Config.ActivationKey = 51
 Config.ActivationKeyText = 'INPUT_CONTEXT'

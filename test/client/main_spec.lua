@@ -11,6 +11,7 @@ describe('client - main', function()
     before_each(function()
         _G.unpack = table.unpack
         _G.Config = {
+            LimitToAmbulanceJob = false,
             ActivationKey = 1,
             MaxPatientsPerTrip = 3,
             Formulas = {},
@@ -82,6 +83,38 @@ describe('client - main', function()
         verify(_G.Log.debug('coordinates too far spawn point 5 translated'))
     end)
 
+    it('waitForEsxInitialization', function()
+        setEsx(nil)
+        _G.Citizen.Wait = coroutine.yield
+
+        local loop = coroutine.create(waitForEsxInitialization)
+        iterateLoop(loop)
+
+        assert.equals('suspended', coroutine.status(loop))
+        verify(_G.Wrapper.TriggerEvent('esx:getSharedObject', any()))
+
+        setEsx(esx)
+        iterateLoop(loop)
+        assert.equals('dead', coroutine.status(loop))
+    end)
+
+    it('waitForPlayerJobInitialization', function()
+        _G.Citizen.Wait = coroutine.yield
+
+        playerData.job = 'not set'
+
+        local loop = coroutine.create(waitForPlayerJobInitialization)
+        iterateLoop(loop)
+
+        assert.equals('not set', playerData.job)
+        
+        when(esx.GetPlayerData()).thenAnswer({job = {name = 'job'}})
+        iterateLoop(loop)
+        iterateLoop(loop)
+
+        assert.equals('job', playerData.job)
+    end)
+
     it('controlLoop - control not pressed, just loops', function()
         _G.Citizen.Wait = coroutine.yield
         when(_G.Wrapper.IsControlJustPressed(1, 1)).thenAnswer(false)
@@ -130,6 +163,38 @@ describe('client - main', function()
 
         verify(_G.Wrapper.TriggerEvent('blargleambulance:startGame'))
         verify(esx.ShowHelpNotification('stop_game_help translated'))
+    end)
+
+    it('controlLoop - LimitToAmbulanceJob set to true, just loops when player is not ambulance user', function()
+        _G.Citizen.Wait = coroutine.yield
+        _G.Config.LimitToAmbulanceJob = true
+        gameData.isPlaying = false
+        playerData.job = 'not ambulance'
+
+        local loop = coroutine.create(controlLoop)
+        iterateLoop(loop)
+
+        verifyNoCall(_G.Wrapper.IsControlJustPressed(1, 1))
+    end)
+
+    it('controlLoop - LimitToAmbulanceJob set to true, switches to checking for input when job changes', function()
+        registerJobChangeListener()
+
+        _G.Citizen.Wait = coroutine.yield
+        _G.Config.LimitToAmbulanceJob = true
+        gameData.isPlaying = false
+        playerData.job = {name = 'not ambulance'}
+
+        local loop = coroutine.create(controlLoop)
+        iterateLoop(loop)
+
+        verifyNoCall(_G.Wrapper.IsControlJustPressed(1, 1))
+
+        setPlayerJob({name = 'ambulance'})
+        iterateLoop(loop)
+        iterateLoop(loop)
+
+        verify(_G.Wrapper.IsControlJustPressed(1, 1))
     end)
 
     it('mainLoop - triggers terminate event when playing and player not in ambulance', function()
@@ -208,6 +273,17 @@ describe('client - main', function()
         iterateLoop(loop)
 
         verify(esx.ShowHelpNotification('start_game_help translated'))
+    end)
+
+    it('mainLoop - does not gather data when LimitToAmbulanceJob and not ambulance job', function()
+        _G.Config.LimitToAmbulanceJob = true
+        playerData.job = 'not ambulance'
+        Citizen.Wait = coroutine.yield
+
+        local loop = coroutine.create(mainLoop)
+        iterateLoop(loop)
+
+        verifyNoCall(_G.Wrapper.PlayerPedId())
     end)
 
     function mockCommonGatherDataCalls()
