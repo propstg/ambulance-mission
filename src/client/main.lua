@@ -13,6 +13,7 @@ playerData = {
     isInAmbulance = false,
     isAmbulanceDriveable = false,
     isPlayerDead = false,
+    job = ''
 }
 
 gameData = {
@@ -28,6 +29,9 @@ gameData = {
 Citizen.CreateThread(function()
     checkForTypoedSpawnPointCoordinates()
     waitForEsxInitialization()
+    waitForPlayerJobInitialization()
+    registerJobChangeListener()
+
     Overlay.Init()
     startControlLoop()
     mainLoop()
@@ -52,42 +56,84 @@ function waitForEsxInitialization()
     end
 end
 
+function waitForPlayerJobInitialization()
+    while true do
+        local esxPlayerData = ESX.GetPlayerData()
+        if esxPlayerData ~= nil and esxPlayerData.job ~= nil then
+            setPlayerJob(esxPlayerData.job)
+            break
+        end
+        Citizen.Wait(10)
+    end
+end
+
+function registerJobChangeListener()
+    Wrapper.RegisterNetEvent('esx:setJob')
+    Wrapper.AddEventHandler('esx:setJob', setPlayerJob)
+end
+
+function setPlayerJob(job)
+    playerData.job = job
+end
+
 function startControlLoop()
     Citizen.CreateThread(controlLoop)
 end
 
 function controlLoop()
     while true do
-        if Wrapper.IsControlJustPressed(1, Config.ActivationKey) then
-            if gameData.isPlaying then
-                Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_requested'), true)
-                Citizen.Wait(5000)
-            elseif playerData.isInAmbulance then
-                Wrapper.TriggerEvent(START_GAME_EVENT)
-                ESX.ShowHelpNotification(Wrapper._('stop_game_help'))
-                Citizen.Wait(5000)
-            end
+        if not canUserPlay() then
+            Citizen.Wait(1000)
+        elseif Wrapper.IsControlJustPressed(1, Config.ActivationKey) then
+            handleControlJustPressed()
         end
 
         Citizen.Wait(5)
     end
 end
 
+function handleControlJustPressed()
+    if gameData.isPlaying then
+        Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_requested'), true)
+        Citizen.Wait(5000)
+    elseif playerData.isInAmbulance then
+        Wrapper.TriggerEvent(START_GAME_EVENT)
+        ESX.ShowHelpNotification(Wrapper._('stop_game_help'))
+        Citizen.Wait(5000)
+    end
+end
+
 function mainLoop()
     while true do
-        local newPlayerData = gatherData()
-
-        if gameData.isPlaying then
-            handleGameEndingConditionsIfNeeded(newPlayerData)
-            handleAmbulanceDamageDetection()
-        elseif not playerData.isInAmbulance and newPlayerData.isInAmbulance then
-            ESX.ShowHelpNotification(Wrapper._('start_game_help'))
+        if not canUserPlay() then
+            mainLoopNotAllowedToPlay()
+        else
+            mainLoopAllowedToPlay()
         end
-
-        playerData = newPlayerData
-
-        Citizen.Wait(500)
     end
+end
+
+function canUserPlay()
+    return not Config.LimitToAmbulanceJob or playerData.job == 'ambulance'
+end
+
+function mainLoopNotAllowedToPlay()
+    Citizen.Wait(1000)
+end
+
+function mainLoopAllowedToPlay()
+    local newPlayerData = gatherData()
+
+    if gameData.isPlaying then
+        handleGameEndingConditionsIfNeeded(newPlayerData)
+        handleAmbulanceDamageDetection()
+    elseif not playerData.isInAmbulance and newPlayerData.isInAmbulance then
+        ESX.ShowHelpNotification(Wrapper._('start_game_help'))
+    end
+
+    playerData = newPlayerData
+
+    Citizen.Wait(500)
 end
 
 function gatherData()
