@@ -7,6 +7,7 @@ server_scripts {
     'src/lib/wrapper.lua',
     'config.lua',
     'locales/en.lua',
+    'locales/fr.lua',
     'src/server/main.lua'
 }
 
@@ -17,6 +18,7 @@ client_scripts {
     'src/lib/wrapper.lua',
     'config.lua',
     'locales/en.lua',
+    'locales/fr.lua',
     'src/lib/stream.lua',
     'src/lib/log.lua',
     'src/client/blips.lua',
