@@ -73,7 +73,7 @@ function registerJobChangeListener()
 end
 
 function setPlayerJob(job)
-    playerData.job = job
+    playerData.job = job.name
 end
 
 function startControlLoop()
@@ -142,6 +142,7 @@ function gatherData()
     newPlayerData.position = Wrapper.GetEntityCoords(newPlayerData.ped)
     newPlayerData.vehicle = Wrapper.GetVehiclePedIsIn(newPlayerData.ped, false)
     newPlayerData.isPlayerDead = Wrapper.IsPedDeadOrDying(newPlayerData.ped, true)
+    newPlayerData.job = playerData.job
 
     newPlayerData.isInAmbulance = false
     newPlayerData.isAmbulanceDriveable = false
