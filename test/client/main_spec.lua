@@ -108,7 +108,7 @@ describe('client - main', function()
 
         assert.equals('not set', playerData.job)
         
-        when(esx.GetPlayerData()).thenAnswer({job = 'job'})
+        when(esx.GetPlayerData()).thenAnswer({job = {name = 'job'}})
         iterateLoop(loop)
         iterateLoop(loop)
 
@@ -183,14 +183,14 @@ describe('client - main', function()
         _G.Citizen.Wait = coroutine.yield
         _G.Config.LimitToAmbulanceJob = true
         gameData.isPlaying = false
-        playerData.job = 'not ambulance'
+        playerData.job = {name = 'not ambulance'}
 
         local loop = coroutine.create(controlLoop)
         iterateLoop(loop)
 
         verifyNoCall(_G.Wrapper.IsControlJustPressed(1, 1))
 
-        setPlayerJob('ambulance')
+        setPlayerJob({name = 'ambulance'})
         iterateLoop(loop)
         iterateLoop(loop)
 
@@ -277,6 +277,7 @@ describe('client - main', function()
 
     it('mainLoop - does not gather data when LimitToAmbulanceJob and not ambulance job', function()
         _G.Config.LimitToAmbulanceJob = true
+        playerData.job = 'not ambulance'
         Citizen.Wait = coroutine.yield
 
         local loop = coroutine.create(mainLoop)
