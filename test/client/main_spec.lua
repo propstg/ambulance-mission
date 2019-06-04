@@ -14,6 +14,8 @@ describe('client - main', function()
             LimitToAmbulanceJob = false,
             ActivationKey = 1,
             MaxPatientsPerTrip = 3,
+            PedEndInvincibilityDistance = 30,
+            PedPickupDistance = 10,
             Formulas = {},
             Sounds = {
                 timeRemoved = {audioName = 'AudioName', audioRef = 'AudioRef'},
@@ -682,6 +684,17 @@ describe('client - main', function()
         when(_G.Wrapper.GetDistanceBetweenCoords(playerData.position, 100, 100, 100, false)).thenAnswer(100.0)
 
         handlePatientPickUps()
+    end)
+
+    it('handlePatientPickUps - no peds within distance for pickup - removes invincibility of ped when in range', function()
+        playerData.position = createCoords(1, 2, 3)
+        gameData.peds = {{model = 'pedModel', coords = createCoords(100, 100, 100)}}
+        when(_G.Wrapper.GetDistanceBetweenCoords(playerData.position, 100, 100, 100, false)).thenAnswer(25.0)
+
+        handlePatientPickUps()
+
+        verify(_G.Peds.SetInvincibility('pedModel', false))
+        verifyNoCall(_G.Peds.EnterVehicle('ped model', 'vehicleObject', 1))
     end)
 
     it('handlePatientPickUps - ped in distance - displays return to hospital message when ambulance full', function()

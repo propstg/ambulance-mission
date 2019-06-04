@@ -306,7 +306,11 @@ end
 
 function handlePatientPickUps()
     for index, ped in pairs(gameData.peds) do
-        if getDistance(playerData.position, ped.coords) <= 10.0 then
+        local distanceFromPed = getDistance(playerData.position, ped.coords)
+
+        removePatientInvincibilityIfInRange(ped, distanceFromPed)
+
+        if distanceFromPed <= Config.PedPickupDistance then
             displayMessageAndWaitUntilStopped('stop_ambulance_pickup')
 
             handleLoading(ped, index)
@@ -324,6 +328,12 @@ function handlePatientPickUps()
 
             return
         end
+    end
+end
+
+function removePatientInvincibilityIfInRange(ped, distanceFromPed)
+    if distanceFromPed <= Config.PedEndInvincibilityDistance then
+        Peds.SetInvincibility(ped.model, false)
     end
 end
 
