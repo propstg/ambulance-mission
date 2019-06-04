@@ -13,6 +13,7 @@ function Peds.CreateRandomPedInArea(coords)
     Wrapper.ApplyPedDamagePack(ped, pedDamagePack, 100.0, 100.0)
     Peds.wanderInArea(ped, coords)
     Peds.incrementModelsHashUsedByPedCount(modelName)
+    Peds.SetInvincibility(ped, true)
 
     return {
         model = ped,
@@ -29,6 +30,10 @@ function Peds.wanderInArea(ped, stopCoords)
         Config.Markers.Size / 2.0, -- minimalLength
         5000                       -- timeBetweenWalks
     )
+end
+
+function Peds.SetInvincibility(ped, isInvincible)
+    Wrapper.SetEntityInvincible(ped, isInvincible)
 end
 
 function Peds.EnterVehicle(ped, vehicle, seatNumber)

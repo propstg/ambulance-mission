@@ -17,6 +17,8 @@ Config.Formulas = {
     timeLostForDamage           = function(damage)                  return math.floor(damage) end,
 }
 
+Config.PedEndInvincibilityDistance = 30.0
+Config.PedPickupDistance = 10.0
 Config.EnterVehicleTimeout = 10000
 Config.Markers = {
     Size = 10.0,
