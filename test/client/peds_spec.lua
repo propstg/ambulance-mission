@@ -43,6 +43,7 @@ describe('client - peds', function()
         verify(_G.Wrapper.RequestModel('Model 1 Hash'))
         verify(_G.Wrapper.ApplyPedDamagePack('pedObject', 'Pack 1', 100.0, 100.0))
         verify(_G.Wrapper.TaskWanderInArea('pedObject', any(), any(), any(), 5.0, 5.0, 5000))
+        verify(_G.Wrapper.SetEntityInvincible('pedObject', true))
     end)
     
     it('EnterVehicle', function()
