@@ -17,7 +17,7 @@ playerData = {
 }
 
 gameData = {
-    isCurrentlyUnloadingPeds = false,
+    isSettingUpLevel = false,
     isPlaying = false,
     level = 1,
     peds = {}, -- {{model: model, coords: coords}}
@@ -172,7 +172,7 @@ function handleGameEndingConditionsIfNeeded(newPlayerData)
 end
 
 function areAnyPatientsDead()
-    return (not gameData.isCurrentlyUnloadingPeds) and Stream.of(gameData.peds)
+    return (not gameData.isSettingUpLevel) and Stream.of(gameData.peds)
         .anyMatch(function(patient) return Wrapper.IsPedDeadOrDying(patient.model, 1) end)
 end
 
@@ -277,12 +277,10 @@ end
 function handlePatientDropOff()
     displayMessageAndWaitUntilStopped('stop_ambulance_dropoff')
 
-    gameData.isCurrentlyUnloadingPeds = true
     local numberDroppedOff = #gameData.pedsInAmbulance
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
     gameData.pedsInAmbulance = {}
     updateMarkersAndBlips()
-    gameData.isCurrentlyUnloadingPeds = false
 
     if #gameData.peds == 0 then
         gameData.secondsLeft = Config.InitialSeconds
@@ -370,6 +368,7 @@ function waitUntilPatientInAmbulance(ped)
 end
 
 function setupLevel()
+    gameData.isSettingUpLevel = true
     gameData.peds = Stream.of(gameData.hospitalLocation.spawnPoints)
         .shuffle()
         .filter(function(_, index) return index <= gameData.level end)
@@ -386,6 +385,7 @@ function setupLevel()
     end
 
     Scaleform.ShowMessage(Wrapper._('start_level_header', gameData.level), subMessage, 5)
+    gameData.isSettingUpLevel = false
 end
 
 function getDistance(coords1, coords2)
