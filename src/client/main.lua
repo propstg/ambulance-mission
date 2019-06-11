@@ -17,6 +17,7 @@ playerData = {
 }
 
 gameData = {
+    isSettingUpLevel = false,
     isPlaying = false,
     level = 1,
     peds = {}, -- {{model: model, coords: coords}}
@@ -171,7 +172,7 @@ function handleGameEndingConditionsIfNeeded(newPlayerData)
 end
 
 function areAnyPatientsDead()
-    return Stream.of(gameData.peds)
+    return (not gameData.isSettingUpLevel) and Stream.of(gameData.peds)
         .anyMatch(function(patient) return Wrapper.IsPedDeadOrDying(patient.model, 1) end)
 end
 
@@ -367,6 +368,7 @@ function waitUntilPatientInAmbulance(ped)
 end
 
 function setupLevel()
+    gameData.isSettingUpLevel = true
     gameData.peds = Stream.of(gameData.hospitalLocation.spawnPoints)
         .shuffle()
         .filter(function(_, index) return index <= gameData.level end)
@@ -383,6 +385,7 @@ function setupLevel()
     end
 
     Scaleform.ShowMessage(Wrapper._('start_level_header', gameData.level), subMessage, 5)
+    gameData.isSettingUpLevel = false
 end
 
 function getDistance(coords1, coords2)
