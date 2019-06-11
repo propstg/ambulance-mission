@@ -17,6 +17,7 @@ playerData = {
 }
 
 gameData = {
+    isCurrentlyUnloadingPeds = false,
     isPlaying = false,
     level = 1,
     peds = {}, -- {{model: model, coords: coords}}
@@ -171,7 +172,7 @@ function handleGameEndingConditionsIfNeeded(newPlayerData)
 end
 
 function areAnyPatientsDead()
-    return Stream.of(gameData.peds)
+    return (not gameData.isCurrentlyUnloadingPeds) and Stream.of(gameData.peds)
         .anyMatch(function(patient) return Wrapper.IsPedDeadOrDying(patient.model, 1) end)
 end
 
@@ -276,10 +277,12 @@ end
 function handlePatientDropOff()
     displayMessageAndWaitUntilStopped('stop_ambulance_dropoff')
 
+    gameData.isCurrentlyUnloadingPeds = true
     local numberDroppedOff = #gameData.pedsInAmbulance
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
     gameData.pedsInAmbulance = {}
     updateMarkersAndBlips()
+    gameData.isCurrentlyUnloadingPeds = false
 
     if #gameData.peds == 0 then
         gameData.secondsLeft = Config.InitialSeconds
