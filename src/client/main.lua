@@ -4,8 +4,6 @@ local TERMINATE_GAME_EVENT = 'blargleambulance:terminateGame'
 local START_GAME_EVENT = 'blargleambulance:startGame'
 local SERVER_EVENT = 'blargleambulance:finishLevel'
 
-local AMBULANCE_HASH = Wrapper.GetHashKey('Ambulance')
-
 playerData = {
     ped = nil,
     position = nil,
@@ -150,7 +148,8 @@ function gatherData()
     newPlayerData.isAmbulanceDriveable = false
 
     if newPlayerData.vehicle ~= nil then
-        newPlayerData.isInAmbulance = Wrapper.IsVehicleModel(newPlayerData.vehicle, AMBULANCE_HASH)
+        local ambulanceModel = Config.AmbulanceModel or 'AMBULANCE'
+        newPlayerData.isInAmbulance = Wrapper.IsVehicleModel(newPlayerData.vehicle, ambulanceModel)
 
         if newPlayerData.isInAmbulance then
             newPlayerData.isAmbulanceDriveable = Wrapper.IsVehicleDriveable(newPlayerData.vehicle, true)
