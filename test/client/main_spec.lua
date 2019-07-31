@@ -36,8 +36,6 @@ describe('client - main', function()
         _G.Overlay = mockagne.getMock()
         _G.Log = mockagne.getMock()
 
-        when(_G.Wrapper.GetHashKey('Ambulance')).thenAnswer('AmbulanceHash')
-
         require('../../src/lib/stream')
         require('../../src/client/main')
 
@@ -217,7 +215,7 @@ describe('client - main', function()
         gameData.isPlaying = true
         mockCommonGatherDataCalls()
         when(_G.Wrapper.GetVehiclePedIsIn('ped id', false)).thenAnswer('vehicleObject')
-        when(_G.Wrapper.IsVehicleModel('vehicleObject', 'AmbulanceHash')).thenAnswer(true)
+        when(_G.Wrapper.IsVehicleModel('vehicleObject', 'AMBULANCE')).thenAnswer(true)
         when(_G.Wrapper.IsVehicleDriveable('vehicleObject', true)).thenAnswer(false)
         when(_G.Wrapper._('terminate_destroyed_ambulance')).thenAnswer('terminate_destroyed_ambulance translated')
 
@@ -234,7 +232,7 @@ describe('client - main', function()
         when(_G.Wrapper.GetEntityCoords('ped id')).thenAnswer('positionObject')
         when(_G.Wrapper.IsPedDeadOrDying('ped id', true)).thenAnswer(true)
         when(_G.Wrapper.GetVehiclePedIsIn('ped id', false)).thenAnswer('vehicleObject')
-        when(_G.Wrapper.IsVehicleModel('vehicleObject', 'AmbulanceHash')).thenAnswer(true)
+        when(_G.Wrapper.IsVehicleModel('vehicleObject', 'AMBULANCE')).thenAnswer(true)
         when(_G.Wrapper.IsVehicleDriveable('vehicleObject', true)).thenAnswer(true)
         when(_G.Wrapper._('terminate_you_died')).thenAnswer('terminate_you_died translated')
 
@@ -250,7 +248,7 @@ describe('client - main', function()
         gameData.peds = {{model = 'pedObject'}}
         mockCommonGatherDataCalls()
         when(_G.Wrapper.GetVehiclePedIsIn('ped id', false)).thenAnswer('vehicleObject')
-        when(_G.Wrapper.IsVehicleModel('vehicleObject', 'AmbulanceHash')).thenAnswer(true)
+        when(_G.Wrapper.IsVehicleModel('vehicleObject', 'AMBULANCE')).thenAnswer(true)
         when(_G.Wrapper.IsVehicleDriveable('vehicleObject', true)).thenAnswer(true)
         when(_G.Wrapper._('terminate_patient_died')).thenAnswer('terminate_patient_died translated')
         when(_G.Wrapper.IsPedDeadOrDying('pedObject', 1)).thenAnswer(true)
@@ -261,13 +259,30 @@ describe('client - main', function()
         verify(_G.Wrapper.TriggerEvent('blargleambulance:terminateGame', 'terminate_patient_died translated', true))
     end)
     
-    it('mainLoop - shows start game notification when player enters ambulance', function()
+    it('mainLoop - shows start game notification when player enters ambulance -- using default AMBULANCE model when no config value provided', function()
         Citizen.Wait = coroutine.yield
         gameData.isPlaying = false
         playerData.isInAmbulance = false
         mockCommonGatherDataCalls()
         when(_G.Wrapper.GetVehiclePedIsIn('ped id', false)).thenAnswer('vehicleObject')
-        when(_G.Wrapper.IsVehicleModel('vehicleObject', 'AmbulanceHash')).thenAnswer(true)
+        when(_G.Wrapper.IsVehicleModel('vehicleObject', 'AMBULANCE')).thenAnswer(true)
+        when(_G.Wrapper.IsVehicleDriveable('vehicleObject', true)).thenAnswer(true)
+        when(_G.Wrapper._('start_game_help')).thenAnswer('start_game_help translated')
+
+        local loop = coroutine.create(mainLoop)
+        iterateLoop(loop)
+
+        verify(esx.ShowHelpNotification('start_game_help translated'))
+    end)
+    
+    it('mainLoop - shows start game notification when player enters ambulance -- using model from config', function()
+        _G.Config.AmbulanceModel = 'CUSTOM'
+        Citizen.Wait = coroutine.yield
+        gameData.isPlaying = false
+        playerData.isInAmbulance = false
+        mockCommonGatherDataCalls()
+        when(_G.Wrapper.GetVehiclePedIsIn('ped id', false)).thenAnswer('vehicleObject')
+        when(_G.Wrapper.IsVehicleModel('vehicleObject', 'CUSTOM')).thenAnswer(true)
         when(_G.Wrapper.IsVehicleDriveable('vehicleObject', true)).thenAnswer(true)
         when(_G.Wrapper._('start_game_help')).thenAnswer('start_game_help translated')
 
