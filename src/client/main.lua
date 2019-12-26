@@ -24,6 +24,7 @@ gameData = {
     secondsLeft = 0,
     hospitalLocation = {x = 0, y = 0, z = 0, spawnPoints = {}},
     lastVehicleHealth = 1000,
+    maxPatientsPerTrip = 0,
 }
 
 Citizen.CreateThread(function()
@@ -148,8 +149,7 @@ function gatherData()
     newPlayerData.isAmbulanceDriveable = false
 
     if newPlayerData.vehicle ~= nil then
-        local ambulanceModel = Config.AmbulanceModel or 'AMBULANCE'
-        newPlayerData.isInAmbulance = Wrapper.IsVehicleModel(newPlayerData.vehicle, ambulanceModel)
+        newPlayerData.isInAmbulance, gameData.maxPatientsPerTrip = isInAmbulanceVehicle(newPlayerData.vehicle)
 
         if newPlayerData.isInAmbulance then
             newPlayerData.isAmbulanceDriveable = Wrapper.IsVehicleDriveable(newPlayerData.vehicle, true)
@@ -157,6 +157,27 @@ function gatherData()
     end
 
     return newPlayerData
+end
+
+function isInAmbulanceVehicle(vehicle)
+    if Config.AmbulanceModels ~= nil then
+        local inVehicle = Stream.of(Config.AmbulanceModels)
+            .filter(function (modelDetails, _) return isInVehicle(vehicle, modelDetails.model) end)
+            .collect()
+
+        if #inVehicle > 0 then
+            return true, inVehicle[1].maxPatientsPerTrip
+        end
+    else
+        local ambulanceModel = Config.AmbulanceModel or 'AMBULANCE'
+        return isInVehicle(vehicle, ambulanceModel), (Config.MaxPatientsPerTrip or 3)
+    end
+
+    return false, 0
+end
+
+function isInVehicle(vehicle, model)
+    return Wrapper.IsVehicleModel(vehicle, model)
 end
 
 function handleGameEndingConditionsIfNeeded(newPlayerData)
@@ -323,7 +344,7 @@ function handlePatientPickUps()
             updateMarkersAndBlips()
             Overlay.Update(gameData)
 
-            if #gameData.pedsInAmbulance >= Config.MaxPatientsPerTrip then
+            if #gameData.pedsInAmbulance >= gameData.maxPatientsPerTrip then
                 Scaleform.ShowMessage(Wrapper._('return_to_hospital_header'),
                     Wrapper._('return_to_hospital_sub_full'), 5)
             elseif #gameData.peds == 0 then
@@ -405,7 +426,7 @@ function displayMessageAndWaitUntilStopped(notificationMessage)
 end
 
 function findFirstFreeSeat()
-    for i = 1, Config.MaxPatientsPerTrip do
+    for i = 1, gameData.maxPatientsPerTrip do
         if Wrapper.IsVehicleSeatFree(playerData.vehicle, i) then
             return i
         end

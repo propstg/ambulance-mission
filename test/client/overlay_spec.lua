@@ -33,7 +33,8 @@ describe('client - overlay', function()
             secondsLeft = 100,
             level = 1,
             peds = {'ped'},
-            pedsInAmbulance = {'ped 2'}
+            pedsInAmbulance = {'ped 2'},
+            maxPatientsPerTrip = 3
         }
         when(_G.Wrapper.jsonEncode(any())).thenAnswer('encodedJson')
 

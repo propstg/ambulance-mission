@@ -48,7 +48,7 @@ function Overlay.Update(gameData)
         type = 'tick',
         timeLeft = Overlay.determineTimeLeft(),
         level = Overlay.gameData.level,
-        emptySeats = Config.MaxPatientsPerTrip - #Overlay.gameData.pedsInAmbulance,
+        emptySeats = Overlay.gameData.maxPatientsPerTrip - #Overlay.gameData.pedsInAmbulance,
         patientsLeft = #Overlay.gameData.peds
     }
 
