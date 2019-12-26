@@ -273,9 +273,10 @@ describe('client - main', function()
         iterateLoop(loop)
 
         verify(esx.ShowHelpNotification('start_game_help translated'))
+        assert.equals(3, _G.gameData.maxPatientsPerTrip)
     end)
     
-    it('mainLoop - shows start game notification when player enters ambulance -- using model from config', function()
+    it('mainLoop - shows start game notification when player enters ambulance -- using model from config (old style)', function()
         _G.Config.AmbulanceModel = 'CUSTOM'
         Citizen.Wait = coroutine.yield
         gameData.isPlaying = false
@@ -290,6 +291,71 @@ describe('client - main', function()
         iterateLoop(loop)
 
         verify(esx.ShowHelpNotification('start_game_help translated'))
+        assert.equals(3, _G.gameData.maxPatientsPerTrip)
+    end)
+    
+    it('mainLoop - shows start game notification when player enters ambulance -- using model from config (new style) -- first in list', function()
+        _G.Config.AmbulanceModels = {
+            {model = 'AMBULANCE', maxPatientsPerTrip = 3},
+            {model = 'POLMAV', maxPatientsPerTrip = 1},
+        }
+        Citizen.Wait = coroutine.yield
+        gameData.isPlaying = false
+        playerData.isInAmbulance = false
+        mockCommonGatherDataCalls()
+        when(_G.Wrapper.GetVehiclePedIsIn('ped id', false)).thenAnswer('vehicleObject')
+        when(_G.Wrapper.IsVehicleModel('vehicleObject', 'AMBULANCE')).thenAnswer(true)
+        when(_G.Wrapper.IsVehicleDriveable('vehicleObject', true)).thenAnswer(true)
+        when(_G.Wrapper._('start_game_help')).thenAnswer('start_game_help translated')
+
+        local loop = coroutine.create(mainLoop)
+        iterateLoop(loop)
+
+        verify(esx.ShowHelpNotification('start_game_help translated'))
+        assert.equals(3, _G.gameData.maxPatientsPerTrip)
+    end)
+    
+    it('mainLoop - shows start game notification when player enters ambulance -- using model from config (new style) -- other in list', function()
+        _G.Config.AmbulanceModels = {
+            {model = 'AMBULANCE', maxPatientsPerTrip = 3},
+            {model = 'POLMAV', maxPatientsPerTrip = 1},
+        }
+        Citizen.Wait = coroutine.yield
+        gameData.isPlaying = false
+        playerData.isInAmbulance = false
+        mockCommonGatherDataCalls()
+        when(_G.Wrapper.GetVehiclePedIsIn('ped id', false)).thenAnswer('vehicleObject')
+        when(_G.Wrapper.IsVehicleModel('vehicleObject', 'AMBULANCE')).thenAnswer(false)
+        when(_G.Wrapper.IsVehicleModel('vehicleObject', 'POLMAV')).thenAnswer(true)
+        when(_G.Wrapper.IsVehicleDriveable('vehicleObject', true)).thenAnswer(true)
+        when(_G.Wrapper._('start_game_help')).thenAnswer('start_game_help translated')
+
+        local loop = coroutine.create(mainLoop)
+        iterateLoop(loop)
+
+        verify(esx.ShowHelpNotification('start_game_help translated'))
+        assert.equals(1, _G.gameData.maxPatientsPerTrip)
+    end)
+    
+    it('mainLoop - new model config style -- not in any vehicles', function()
+        _G.Config.AmbulanceModels = {
+            {model = 'AMBULANCE', maxPatientsPerTrip = 3},
+            {model = 'POLMAV', maxPatientsPerTrip = 1},
+        }
+        Citizen.Wait = coroutine.yield
+        gameData.isPlaying = false
+        playerData.isInAmbulance = false
+        mockCommonGatherDataCalls()
+        when(_G.Wrapper.GetVehiclePedIsIn('ped id', false)).thenAnswer('vehicleObject')
+        when(_G.Wrapper.IsVehicleModel('vehicleObject', 'AMBULANCE')).thenAnswer(false)
+        when(_G.Wrapper.IsVehicleModel('vehicleObject', 'POLMAV')).thenAnswer(false)
+        when(_G.Wrapper.IsVehicleDriveable('vehicleObject', true)).thenAnswer(true)
+
+        local loop = coroutine.create(mainLoop)
+        iterateLoop(loop)
+
+        verifyNoCall(esx.ShowHelpNotification('start_game_help translated'))
+        assert.equals(0, _G.gameData.maxPatientsPerTrip)
     end)
 
     it('mainLoop - does not gather data when LimitToAmbulanceJob and not ambulance job', function()
@@ -720,6 +786,7 @@ describe('client - main', function()
         gameData.isPlaying = true
         gameData.pedsInAmbulance = {'ped 2 object', 'ped 3 object'}
         gameData.secondsLeft = 30
+        gameData.maxPatientsPerTrip = 3
         _G.Config.Formulas.additionalTimeForPickup = function(distance) return distance end
 
         when(_G.Wrapper.GetDistanceBetweenCoords(playerData.position, 1, 2, 3, false)).thenAnswer(10.0)
@@ -750,6 +817,7 @@ describe('client - main', function()
         gameData.isPlaying = true
         gameData.pedsInAmbulance = {}
         gameData.secondsLeft = 30
+        gameData.maxPatientsPerTrip = 3
         _G.Config.Formulas.additionalTimeForPickup = function(distance) return distance end
 
         when(_G.Wrapper.GetDistanceBetweenCoords(playerData.position, 1, 2, 3, false)).thenAnswer(10.0)

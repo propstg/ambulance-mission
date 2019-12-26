@@ -2,13 +2,15 @@ Config = {}
 Config.Locale = 'en'
 Config.DebugLog = true
 Config.LimitToAmbulanceJob = false
-Config.AmbulanceModel = 'AMBULANCE'
+
+Config.AmbulanceModels = {
+    {model = 'AMBULANCE', maxPatientsPerTrip = 3},
+}
 
 Config.ActivationKey = 51
 Config.ActivationKeyText = 'INPUT_CONTEXT'
 
 Config.InitialSeconds = 120
-Config.MaxPatientsPerTrip = 3
 Config.MaxLevels = 5
 
 Config.Formulas = {
