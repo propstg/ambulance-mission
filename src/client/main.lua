@@ -194,7 +194,7 @@ end
 
 function areAnyPatientsDead()
     return (not (gameData.isSettingUpLevel or gameData.isCurrentlyUnloadingPeds)) and Stream.of(gameData.peds)
-        .anyMatch(function(patient) return Wrapper.IsPedDeadOrDying(patient.model, 1) end)
+        .anyMatch(function(patient) return DoesEntityExist(patient.model) and Wrapper.IsPedDeadOrDying(patient.model, 1) end)
 end
 
 function handleAmbulanceDamageDetection()
