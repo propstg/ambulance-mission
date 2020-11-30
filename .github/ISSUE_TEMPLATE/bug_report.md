@@ -11,14 +11,18 @@ assignees: propstg
 A clear and concise description of what the bug is.
 
 **To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+Detailed steps to reproduce the behavior.
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+**Likely essential information**
+1. Are there any errors in the server console?
+
+2. Are you using OneSync?
+
+3. What server version are you using?
+
+4. If the player's game is crashing, is there an error message displayed to the player when the game crashes?
+
+5. Does the issue only happen occasionally? or every time?
 
 **Screenshots**
 If applicable, add screenshots to help explain your problem. Can be screenshots of errors in console.
