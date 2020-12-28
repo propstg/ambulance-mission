@@ -2,23 +2,48 @@ Peds = {}
 Peds.modelsHashUsedByPedCount = {}
 
 function Peds.CreateRandomPedInArea(coords)
+    local spawnCoords = Peds.createRandomCoords(coords)
+    local model = nil
+
+    if not Config.DelayPedSpawnUntilPlayerNearby then
+        model = Peds.spawnRandomPedInArea(spawnCoords)
+    end
+
+    return {
+        model = model,
+        coords = spawnCoords,
+        isSpawned = model ~= nil
+    }
+end
+
+function Peds.LateSpawnPed(ped)
+    return Peds.spawnRandomPedInArea(ped.coords)
+end
+
+function Peds.createRandomCoords(centerPoint)
+    local x = centerPoint.x + math.random() * 4 - 2
+    local y = centerPoint.y + math.random() * 4 - 2
+
+    return {
+        x = x,
+        y = y,
+        z = centerPoint.z
+    }
+end
+
+function Peds.spawnRandomPedInArea(coords)
     local modelName = Peds.loadModel(Peds.randomlySelectModel())
-
-    local x = coords.x + math.random() * 4 - 2
-    local y = coords.y + math.random() * 4 - 2
-    local heading = math.random() * 360
     local pedDamagePack = Config.PedDamagePacks[math.random(#Config.PedDamagePacks)]
+    local heading = math.random() * 360
 
-    local ped = Wrapper.CreatePed(4, modelName, x, y, coords.z, heading, true, false)
+    local ped = Wrapper.CreatePed(4, modelName, coords.x, coords.y, coords.z, heading, true, false)
+
     Wrapper.ApplyPedDamagePack(ped, pedDamagePack, 100.0, 100.0)
     Peds.wanderInArea(ped, coords)
     Peds.incrementModelsHashUsedByPedCount(modelName)
     Peds.SetInvincibility(ped, true)
 
-    return {
-        model = ped,
-        coords = {x = x, y = y, z = coords.z}
-    }
+    return ped
 end
 
 function Peds.wanderInArea(ped, stopCoords)

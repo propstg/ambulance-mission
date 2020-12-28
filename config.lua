@@ -3,6 +3,9 @@ Config.Locale = 'en'
 Config.DebugLog = true
 Config.LimitToAmbulanceJob = false
 
+Config.DelayPedSpawnUntilPlayerNearby = true -- Maybe a workaround for OneSync issues with ped spawning?
+Config.DelayPedSpawnDistance = 30
+
 Config.AmbulanceModels = {
     {model = 'AMBULANCE', maxPatientsPerTrip = 3},
 }

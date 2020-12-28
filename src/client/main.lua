@@ -19,7 +19,7 @@ gameData = {
     isCurrentlyUnloadingPeds = false,
     isPlaying = false,
     level = 1,
-    peds = {}, -- {{model: model, coords: coords}}
+    peds = {}, -- {{model: model, coords: coords, isSpawned: boolean}}
     pedsInAmbulance = {}, -- {{model: model, coords: coords}}
     secondsLeft = 0,
     hospitalLocation = {x = 0, y = 0, z = 0, spawnPoints = {}},
@@ -194,6 +194,7 @@ end
 
 function areAnyPatientsDead()
     return (not (gameData.isSettingUpLevel or gameData.isCurrentlyUnloadingPeds)) and Stream.of(gameData.peds)
+        .filter(function(patient) return patient.isSpawned end)
         .anyMatch(function(patient) return Wrapper.IsPedDeadOrDying(patient.model, 1) end)
 end
 
@@ -326,6 +327,7 @@ end
 
 function mapPedsToModel(peds)
     return Stream.of(peds)
+        .filter(function(ped) return ped.isSpawned end)
         .map(function(ped) return ped.model end)
         .collect()
 end
@@ -334,6 +336,7 @@ function handlePatientPickUps()
     for index, ped in pairs(gameData.peds) do
         local distanceFromPed = getDistance(playerData.position, ped.coords)
 
+        handleDelayedSpawningIfNeeded(ped, distanceFromPed)
         removePatientInvincibilityIfInRange(ped, distanceFromPed)
 
         if distanceFromPed <= Config.PedPickupDistance then
@@ -357,6 +360,13 @@ function handlePatientPickUps()
     end
 end
 
+function handleDelayedSpawningIfNeeded(ped, distanceFromPed)
+    if not ped.isSpawned and distanceFromPed <= Config.DelayPedSpawnDistance then
+        ped.model = Peds.LateSpawnPed(ped)
+        ped.isSpawned = true
+    end
+end
+
 function removePatientInvincibilityIfInRange(ped, distanceFromPed)
     if distanceFromPed <= Config.PedEndInvincibilityDistance then
         Peds.SetInvincibility(ped.model, false)
@@ -377,9 +387,11 @@ end
 
 function handleLoading(ped, index)
     local freeSeat = findFirstFreeSeat()
-    Peds.EnterVehicle(ped.model, playerData.vehicle, freeSeat)
-    table.insert(gameData.pedsInAmbulance, ped)
-    waitUntilPatientInAmbulance(ped)
+    if ped.isSpawned then
+        Peds.EnterVehicle(ped.model, playerData.vehicle, freeSeat)
+        table.insert(gameData.pedsInAmbulance, ped)
+        waitUntilPatientInAmbulance(ped)
+    end
     table.remove(gameData.peds, index)
 end
 
