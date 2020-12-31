@@ -2,6 +2,7 @@ local mockagne = require 'mockagne'
 local when = mockagne.when
 local any = mockagne.any
 local verify = mockagne.verify
+local verifyNoCall = mockagne.verify_no_call
 
 describe('client - peds', function()
 
@@ -25,7 +26,7 @@ describe('client - peds', function()
         deletePedSpy = spy.on(Peds, 'deletePed')
     end)
 
-    it('CreateRandomPedInArea', function()
+    it('CreateRandomPedInArea - create immediately', function()
         when(_G.Wrapper.GetHashKey('Model 2')).thenAnswer('Model 2 Hash')
         when(_G.Wrapper.HasModelLoaded('Model 2 Hash')).thenAnswer(false)
         when(_G.Wrapper.GetHashKey('Model 1')).thenAnswer('Model 1 Hash')
@@ -39,6 +40,44 @@ describe('client - peds', function()
         assert.is_true(math.abs(1 - result.coords.x) <= 2)
         assert.is_true(math.abs(2 - result.coords.y) <= 2)
         assert.is_true(math.abs(3 - result.coords.z) <= 2)
+
+        verify(_G.Wrapper.RequestModel('Model 1 Hash'))
+        verify(_G.Wrapper.ApplyPedDamagePack('pedObject', 'Pack 1', 100.0, 100.0))
+        verify(_G.Wrapper.TaskWanderInArea('pedObject', any(), any(), any(), 5.0, 5.0, 5000))
+        verify(_G.Wrapper.SetEntityInvincible('pedObject', true))
+    end)
+
+    it('CreateRandomPedInArea - only creates coordinates when delay ped spawning enabled', function()
+        _G.Config.DelayPedSpawnUntilPlayerNearby = true
+
+        when(_G.Wrapper.CreatePed(4, 'Model 1', any(), any(), any(), any(), true, false)).thenAnswer('pedObject')
+
+        local result = Peds.CreateRandomPedInArea(createCoords(1, 2, 3))
+
+        assert.is_nil(result.model)
+        assert.is_false(result.isSpawned)
+        assert.is_not_nil(result.coords)
+        assert.is_true(math.abs(1 - result.coords.x) <= 2)
+        assert.is_true(math.abs(2 - result.coords.y) <= 2)
+        assert.is_true(math.abs(3 - result.coords.z) <= 2)
+
+        verifyNoCall(_G.Wrapper.RequestModel)
+        verifyNoCall(_G.Wrapper.ApplyPedDamagePack)
+        verifyNoCall(_G.Wrapper.TaskWanderInArea)
+        verifyNoCall(_G.Wrapper.SetEntityInvincible)
+    end)
+
+    it('LateSpawnPed - creates the ped', function()
+        when(_G.Wrapper.GetHashKey('Model 2')).thenAnswer('Model 2 Hash')
+        when(_G.Wrapper.HasModelLoaded('Model 2 Hash')).thenAnswer(false)
+        when(_G.Wrapper.GetHashKey('Model 1')).thenAnswer('Model 1 Hash')
+        when(_G.Wrapper.HasModelLoaded('Model 1 Hash')).thenAnswer(true)
+        when(_G.Wrapper.CreatePed(4, 'Model 1', any(), any(), any(), any(), true, false)).thenAnswer('pedObject')
+
+        local ped = {coords = createCoords(1, 2, 3), isSpawned = false}
+        local result = Peds.LateSpawnPed(ped)
+
+        assert.equals(result, 'pedObject')
 
         verify(_G.Wrapper.RequestModel('Model 1 Hash'))
         verify(_G.Wrapper.ApplyPedDamagePack('pedObject', 'Pack 1', 100.0, 100.0))

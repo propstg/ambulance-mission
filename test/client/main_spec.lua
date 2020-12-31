@@ -245,7 +245,7 @@ describe('client - main', function()
     it('mainLoop - triggers terminate event when patient dies', function()
         Citizen.Wait = coroutine.yield
         gameData.isPlaying = true
-        gameData.peds = {{model = 'pedObject'}}
+        gameData.peds = {{model = 'pedObject', isSpawned = true}}
         mockCommonGatherDataCalls()
         when(_G.Wrapper.GetVehiclePedIsIn('ped id', false)).thenAnswer('vehicleObject')
         when(_G.Wrapper.IsVehicleModel('vehicleObject', 'AMBULANCE')).thenAnswer(true)
@@ -387,7 +387,11 @@ describe('client - main', function()
         when(_G.Wrapper.IsPedDeadOrDying('pedObject 1', 1)).thenAnswer(false)
         when(_G.Wrapper.IsPedDeadOrDying('pedObject 2', 1)).thenAnswer(false)
         when(_G.Wrapper.IsPedDeadOrDying('pedObject 3', 1)).thenAnswer(false)
-        gameData.peds = {{model = 'pedObject 1'}, {model = 'pedObject 2'}, {model = 'pedObject 3'}}
+        gameData.peds = {
+            {model = 'pedObject 1', isSpawned = true},
+            {model = 'pedObject 2', isSpawned = true},
+            {model = 'pedObject 3', isSpawned = true}
+        }
 
         assert.is_false(areAnyPatientsDead())
     end)
@@ -395,10 +399,30 @@ describe('client - main', function()
     it('areAnyPatientsDead - one ped dead', function()
         when(_G.Wrapper.IsPedDeadOrDying('pedObject 1', 1)).thenAnswer(false)
         when(_G.Wrapper.IsPedDeadOrDying('pedObject 2', 1)).thenAnswer(true)
-        gameData.peds = {{model = 'pedObject 1'}, {model = 'pedObject 2'}, {model = 'pedObject 3'}}
+        gameData.peds = {
+            {model = 'pedObject 1', isSpawned = true},
+            {model = 'pedObject 2', isSpawned = true},
+            {model = 'pedObject 3', isSpawned = true}
+        }
 
         assert.is_true(areAnyPatientsDead())
 
+        verifyNoCall(_G.Wrapper.IsPedDeadOrDying('pedObject 3', 1))
+    end)
+    
+    it('areAnyPatientsDead - no patients spawned', function()
+        when(_G.Wrapper.IsPedDeadOrDying('pedObject 1', 1)).thenAnswer(false)
+        when(_G.Wrapper.IsPedDeadOrDying('pedObject 2', 1)).thenAnswer(true)
+        gameData.peds = {
+            {model = 'pedObject 1', isSpawned = false},
+            {model = 'pedObject 2', isSpawned = false},
+            {model = 'pedObject 3', isSpawned = false}
+        }
+
+        assert.is_false(areAnyPatientsDead())
+
+        verifyNoCall(_G.Wrapper.IsPedDeadOrDying('pedObject 1', 1))
+        verifyNoCall(_G.Wrapper.IsPedDeadOrDying('pedObject 2', 1))
         verifyNoCall(_G.Wrapper.IsPedDeadOrDying('pedObject 3', 1))
     end)
 
@@ -495,8 +519,8 @@ describe('client - main', function()
 
     it('terminateGame - failed', function()
         gameData.isPlaying = true
-        gameData.peds = {{model = 'model 1'}, {model = 'model 2'}}
-        gameData.pedsInAmbulance = {{model = 'model 3'}}
+        gameData.peds = {{model = 'model 1', isSpawned = true}, {model = 'model 2', isSpawned = true}}
+        gameData.pedsInAmbulance = {{model = 'model 3', isSpawned = true}}
         when(_G.Wrapper._('terminate_failed')).thenAnswer('terminate_failed translated')
 
         terminateGame('reason for terminating', true)
@@ -507,8 +531,8 @@ describe('client - main', function()
 
     it('terminateGame - won', function()
         gameData.isPlaying = true
-        gameData.peds = {{model = 'model 1'}, {model = 'model 2'}}
-        gameData.pedsInAmbulance = {{model = 'model 3'}}
+        gameData.peds = {{model = 'model 1', isSpawned = true}, {model = 'model 2', isSpawned = true}}
+        gameData.pedsInAmbulance = {{model = 'model 3', isSpawned = true}}
 
         terminateGame('reason for terminating', false)
 
@@ -679,7 +703,7 @@ describe('client - main', function()
     it('handlePatientDropOff - awards more time when there are still more peds to pick up', function()
         playerData.vehicle = 'vehicleObject'
         gameData.isPlaying = true
-        gameData.pedsInAmbulance = {{model = 'model 1'}}
+        gameData.pedsInAmbulance = {{model = 'model 1', isSpawned = true}}
         gameData.peds = {'pedObject 2', 'pedObject 3'}
         gameData.secondsLeft = 10
         when(_G.Wrapper.IsVehicleStopped('vehicleObject')).thenAnswer(true)
@@ -697,7 +721,11 @@ describe('client - main', function()
     it('handlePatientDropOff - no more peds - ends game when finishing last level', function()
         playerData.vehicle = 'vehicleObject'
         gameData.isPlaying = true
-        gameData.pedsInAmbulance = {{model = 'model 1'}, {model = 'model 2'}, {model = 'model 3'}}
+        gameData.pedsInAmbulance = {
+            {model = 'model 1', isSpawned = true},
+            {model = 'model 2', isSpawned = true},
+            {model = 'model 3', isSpawned = true}
+        }
         gameData.peds = {}
         gameData.secondsLeft = 10
         gameData.level = 3
@@ -720,7 +748,11 @@ describe('client - main', function()
     it('handlePatientDropOff - no more peds - starts next level when not on last level', function()
         playerData.vehicle = 'vehicleObject'
         gameData.isPlaying = true
-        gameData.pedsInAmbulance = {{model = 'model 1'}, {model = 'model 2'}, {model = 'model 3'}}
+        gameData.pedsInAmbulance = {
+            {model = 'model 1', isSpawned = true},
+            {model = 'model 2', isSpawned = true},
+            {model = 'model 3', isSpawned = true}
+        }
         gameData.peds = {}
         gameData.secondsLeft = 10
         gameData.level = 3
@@ -746,11 +778,18 @@ describe('client - main', function()
     end)
     
     it('mapPedsToModel', function()
-        local result = mapPedsToModel({{model = 'model 1'}, {model = 'model 2'}})
+        local result = mapPedsToModel({{model = 'model 1', isSpawned = true}, {model = 'model 2', isSpawned = true}})
 
         assert.equals(2, #result)
         assert.equals('model 1', result[1])
         assert.equals('model 2', result[2])
+    end)
+    
+    it('mapPedsToModel - filters out peds that have not been spawned yet', function()
+        local result = mapPedsToModel({{model = 'model 1', isSpawned = false}, {model = 'model 2', isSpawned = true}})
+
+        assert.equals(1, #result)
+        assert.equals('model 2', result[1])
     end)
 
     it('handlePatientPickUps - no peds to pick up', function()
@@ -761,15 +800,29 @@ describe('client - main', function()
 
     it('handlePatientPickUps - no peds within distance', function()
         playerData.position = createCoords(1, 2, 3)
-        gameData.peds = {{coords = createCoords(100, 100, 100)}}
+        gameData.peds = {{coords = createCoords(100, 100, 100), isSpawned = true}}
         when(_G.Wrapper.GetDistanceBetweenCoords(playerData.position, 100, 100, 100, false)).thenAnswer(100.0)
 
         handlePatientPickUps()
     end)
 
+    it('handlePatientPickUps - late spawns ped when nearby', function()
+        _G.Config.DelayPedSpawnUntilPlayerNearby = true
+        _G.Config.DelayPedSpawnDistance = 100
+
+        playerData.position = createCoords(1, 2, 3)
+        gameData.peds = {{coords = createCoords(100, 100, 100), isSpawned = false}}
+        when(_G.Wrapper.GetDistanceBetweenCoords(playerData.position, 100, 100, 100, false)).thenAnswer(50.0)
+
+        handlePatientPickUps()
+
+        verify(_G.Peds.LateSpawnPed(gameData.peds[1]))
+        assert.equals(true, gameData.peds[1].isSpawned)
+    end)
+
     it('handlePatientPickUps - no peds within distance for pickup - removes invincibility of ped when in range', function()
         playerData.position = createCoords(1, 2, 3)
-        gameData.peds = {{model = 'pedModel', coords = createCoords(100, 100, 100)}}
+        gameData.peds = {{model = 'pedModel', coords = createCoords(100, 100, 100), isSpawned = true}}
         when(_G.Wrapper.GetDistanceBetweenCoords(playerData.position, 100, 100, 100, false)).thenAnswer(25.0)
 
         handlePatientPickUps()
@@ -782,7 +835,7 @@ describe('client - main', function()
         playerData.position = createCoords(1, 2, 3)
         playerData.vehicle = 'vehicleObject'
         gameData.hospitalLocation = createCoords(50, 50, 50)
-        gameData.peds = {{model = 'ped model', coords = createCoords(1, 2, 3)}}
+        gameData.peds = {{model = 'ped model', coords = createCoords(1, 2, 3), isSpawned = true}}
         gameData.isPlaying = true
         gameData.pedsInAmbulance = {'ped 2 object', 'ped 3 object'}
         gameData.secondsLeft = 30
@@ -813,7 +866,7 @@ describe('client - main', function()
         playerData.position = createCoords(1, 2, 3)
         playerData.vehicle = 'vehicleObject'
         gameData.hospitalLocation = createCoords(50, 50, 50)
-        gameData.peds = {{model = 'ped model', coords = createCoords(1, 2, 3)}}
+        gameData.peds = {{model = 'ped model', coords = createCoords(1, 2, 3), isSpawned = true}}
         gameData.isPlaying = true
         gameData.pedsInAmbulance = {}
         gameData.secondsLeft = 30
@@ -844,7 +897,10 @@ describe('client - main', function()
         playerData.position = createCoords(1, 2, 3)
         playerData.vehicle = 'vehicleObject'
         gameData.hospitalLocation = createCoords(50, 50, 50)
-        gameData.peds = {{model = 'ped model', coords = createCoords(1, 2, 3)}, {model = 'ped model 2', coords = createCoords(2, 3, 4)}}
+        gameData.peds = {
+            {model = 'ped model', coords = createCoords(1, 2, 3), isSpawned = true},
+            {model = 'ped model 2', coords = createCoords(2, 3, 4), isSpawned = true}
+        }
         gameData.isPlaying = true
         gameData.pedsInAmbulance = {}
         gameData.secondsLeft = 30
