@@ -22,6 +22,10 @@ function Overlay.Stop()
 end
 
 function Overlay.Start(gameData)
+    if Config.RpMode then
+        return
+    end
+
     Overlay.isVisible = true
 
     Overlay.Update(gameData)
