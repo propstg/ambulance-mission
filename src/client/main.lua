@@ -3,6 +3,7 @@ local ESX = nil
 local TERMINATE_GAME_EVENT = 'blargleambulance:terminateGame'
 local START_GAME_EVENT = 'blargleambulance:startGame'
 local SERVER_EVENT = 'blargleambulance:finishLevel'
+local SERVER_PATIENTS_DELIVERED_EVENT = 'blargleambulance:patientsDelivered'
 
 playerData = {
     ped = nil,
@@ -226,6 +227,7 @@ function terminateGame(reasonForTerminating, failed)
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
 end
 Wrapper.AddEventHandler(TERMINATE_GAME_EVENT, terminateGame)
+Wrapper.RegisterNetEvent(TERMINATE_GAME_EVENT)
 
 function startGame()
     gameData.hospitalLocation = findNearestHospital(playerData.position)
@@ -305,6 +307,7 @@ function handlePatientDropOff()
 
     gameData.isCurrentlyUnloadingPeds = true
     local numberDroppedOff = #gameData.pedsInAmbulance
+    Wrapper.TriggerServerEvent(SERVER_PATIENTS_DELIVERED_EVENT, numberDroppedOff)
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
     gameData.pedsInAmbulance = {}
     updateMarkersAndBlips()

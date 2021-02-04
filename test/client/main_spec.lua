@@ -786,6 +786,26 @@ describe('client - main', function()
         verify(_G.NotificationService.ShowMoneyAddedMessage(5))
     end)
 
+    it('handlePatientDropOff - calls server patientDelivered stub', function()
+        playerData.vehicle = 'vehicleObject'
+        gameData.isPlaying = true
+        gameData.pedsInAmbulance = {
+            {model = 'model 1', isSpawned = true},
+            {model = 'model 2', isSpawned = true},
+            {model = 'model 3', isSpawned = true}
+        }
+        gameData.peds = {}
+        gameData.secondsLeft = 10
+        gameData.level = 3
+        _G.Config.MaxLevels = 5
+        _G.Config.Formulas.moneyPerLevel = function() return 5 end
+        when(_G.Wrapper.IsVehicleStopped('vehicleObject')).thenAnswer(true)
+
+        handlePatientDropOff()
+
+        verify(_G.Wrapper.TriggerServerEvent('blargleambulance:patientsDelivered', 3))
+    end)
+
     it('mapPedsToModel -- no peds', function()
         local result = mapPedsToModel({})
 
