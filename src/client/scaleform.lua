@@ -1,7 +1,7 @@
 Scaleform = {}
 
 function Scaleform.ShowPassed()
-    Scaleform.ShowWasted(Wrapper._('terminate_won'), '', 5)
+    Scaleform.ShowWasted(Wrapper._('terminate_won_scale'), '', 5)
 end
 
 function Scaleform.ShowWasted(message, subMessage, secondsToShow)

@@ -32,7 +32,7 @@ describe('client - main', function()
         _G.Blips = mockagne.getMock()
         _G.Markers = mockagne.getMock()
         _G.Peds = mockagne.getMock()
-        _G.Scaleform = mockagne.getMock()
+        _G.NotificationService = mockagne.getMock()
         _G.Overlay = mockagne.getMock()
         _G.Log = mockagne.getMock()
 
@@ -438,7 +438,7 @@ describe('client - main', function()
 
         assert.equals(1000, gameData.lastVehicleHealth)
         assert.equals(100, gameData.secondsLeft)
-        verifyNoCall(Scaleform.ShowRemoveTime(any()))
+        verifyNoCall(_G.NotificationService.ShowRemoveTime(any()))
         verifyNoCall(_G.Wrapper.PlaySoundFrontend(any(), any(), any(), any()))
     end)
     
@@ -454,7 +454,7 @@ describe('client - main', function()
 
         assert.equals(500, gameData.lastVehicleHealth)
         assert.equals(100, gameData.secondsLeft)
-        verifyNoCall(Scaleform.ShowRemoveTime(any()))
+        verifyNoCall(_G.NotificationService.ShowRemoveTime(any()))
         verifyNoCall(_G.Wrapper.PlaySoundFrontend(any(), any(), any(), any()))
     end)
     
@@ -470,7 +470,7 @@ describe('client - main', function()
 
         assert.equals(1000, gameData.lastVehicleHealth)
         assert.equals(100, gameData.secondsLeft)
-        verifyNoCall(Scaleform.ShowRemoveTime(any()))
+        verifyNoCall(_G.NotificationService.ShowRemoveTime(any()))
         verifyNoCall(_G.Wrapper.PlaySoundFrontend(any(), any(), any(), any()))
     end)
     
@@ -487,7 +487,7 @@ describe('client - main', function()
 
         assert.equals(950, gameData.lastVehicleHealth)
         assert.equals(50, gameData.secondsLeft)
-        verify(Scaleform.ShowRemoveTime('time added translated'))
+        verify(_G.NotificationService.ShowRemoveTime(-50))
         verify(_G.Wrapper.PlaySoundFrontend(-1, 'AudioName', 'AudioRef', 1))
     end)
 
@@ -521,11 +521,10 @@ describe('client - main', function()
         gameData.isPlaying = true
         gameData.peds = {{model = 'model 1', isSpawned = true}, {model = 'model 2', isSpawned = true}}
         gameData.pedsInAmbulance = {{model = 'model 3', isSpawned = true}}
-        when(_G.Wrapper._('terminate_failed')).thenAnswer('terminate_failed translated')
 
         terminateGame('reason for terminating', true)
 
-        verify(_G.Scaleform.ShowWasted('terminate_failed translated', 'reason for terminating', 5))
+        verify(_G.NotificationService.ShowGameFailedMessage('reason for terminating'))
         assertCommonExpectationsForTerminateGame('failed')
     end)
 
@@ -537,7 +536,7 @@ describe('client - main', function()
         terminateGame('reason for terminating', false)
 
         verifyNoCall(_G.Wrapper._(any()))
-        verify(_G.Scaleform.ShowPassed())
+        verify(_G.NotificationService.ShowGameWonMessage())
         assertCommonExpectationsForTerminateGame('passed')
     end)
 
@@ -576,6 +575,24 @@ describe('client - main', function()
         verify(_G.Overlay.Start(gameData))
         verify(_G.Markers.StartMarkers(_G.Config.Hospitals[1]))
         verify(_G.Blips.StartBlips(_G.Config.Hospitals[1]))
+    end)
+
+    it('startTimerThreadIfNeeded - creates timer thread when not RpMode', function()
+        _G.Citizen = mockagne.getMock()
+        _G.Config.RpMode = false
+
+        startTimerThreadIfNeeded()
+
+        verify(_G.Citizen.CreateThread(any()))
+    end)
+
+    it('startTimerThreadIfNeeded - does not create timer thread when RpMode', function()
+        _G.Citizen = mockagne.getMock()
+        _G.Config.RpMode = true
+
+        startTimerThreadIfNeeded()
+
+        verifyNoCall(_G.Citizen.CreateThread(any()))
     end)
 
     it('timerLoop - terminates thread when not playing', function()
@@ -733,7 +750,6 @@ describe('client - main', function()
         _G.Config.Formulas.moneyPerLevel = function() return 5 end
         when(_G.Wrapper.IsVehicleStopped('vehicleObject')).thenAnswer(true)
         when(_G.Wrapper._('terminate_finished')).thenAnswer('terminate_finished translated')
-        when(_G.Wrapper._('add_money', 5)).thenAnswer('add_money translated')
 
         handlePatientDropOff()
 
@@ -742,7 +758,7 @@ describe('client - main', function()
         verify(_G.Wrapper.TriggerServerEvent('blargleambulance:finishLevel', 3))
         verify(_G.Wrapper.TriggerEvent('blargleambulance:terminateGame', 'terminate_finished translated', false))
         verifyNoCall(_G.Wrapper.PlaySoundFrontend(any(), any(), any(), any()))
-        verify(_G.Scaleform.ShowAddMoney('add_money translated'))
+        verify(_G.NotificationService.ShowMoneyAddedMessage(5))
     end)
 
     it('handlePatientDropOff - no more peds - starts next level when not on last level', function()
@@ -759,7 +775,6 @@ describe('client - main', function()
         _G.Config.MaxLevels = 5
         _G.Config.Formulas.moneyPerLevel = function() return 5 end
         when(_G.Wrapper.IsVehicleStopped('vehicleObject')).thenAnswer(true)
-        when(_G.Wrapper._('add_money', 5)).thenAnswer('add_money translated')
 
         handlePatientDropOff()
 
@@ -768,7 +783,7 @@ describe('client - main', function()
         verify(_G.Peds.DeletePeds({'model 1', 'model 2', 'model 3'}))
         verify(_G.Wrapper.TriggerServerEvent('blargleambulance:finishLevel', 3))
         verify(_G.Wrapper.PlaySoundFrontend(-1, 'AudioName added', 'AudioRef added', 1))
-        verify(_G.Scaleform.ShowAddMoney('add_money translated'))
+        verify(_G.NotificationService.ShowMoneyAddedMessage(5))
     end)
 
     it('mapPedsToModel -- no peds', function()
@@ -859,7 +874,7 @@ describe('client - main', function()
         verify(_G.Peds.EnterVehicle('ped model', 'vehicleObject', 1))
         verify(_G.Wrapper.PlaySoundFrontend(-1, 'AudioName added', 'AudioRef added', 1))
         verify(_G.Overlay.Update(any()))
-        verify(_G.Scaleform.ShowMessage('return_to_hospital_header translated', 'return_to_hospital_sub_full translated', 5))
+        verify(_G.NotificationService.ShowReturnToHospitalMessage('return_to_hospital_sub_full translated'))
     end)
     
     it('handlePatientPickUps - ped in distance - displays return to hospital message when no more peds', function()
@@ -879,7 +894,6 @@ describe('client - main', function()
         when(_G.Peds.IsPedInVehicleOrTooFarAway('ped model', gameData.peds[1].coords)).thenAnswer(true)
         when(_G.Wrapper.GetDistanceBetweenCoords(gameData.peds[1].coords, 50, 50, 50, false)).thenAnswer(10.0)
         when(_G.Wrapper._('time_added', any())).thenAnswer('time_added translated')
-        when(_G.Wrapper._('return_to_hospital_header')).thenAnswer('return_to_hospital_header translated')
         when(_G.Wrapper._('return_to_hospital_sub_end_level')).thenAnswer('return_to_hospital_sub_end_level translated')
 
         handlePatientPickUps()
@@ -890,7 +904,7 @@ describe('client - main', function()
         verify(_G.Peds.EnterVehicle('ped model', 'vehicleObject', 1))
         verify(_G.Wrapper.PlaySoundFrontend(-1, 'AudioName added', 'AudioRef added', 1))
         verify(_G.Overlay.Update(any()))
-        verify(_G.Scaleform.ShowMessage('return_to_hospital_header translated', 'return_to_hospital_sub_end_level translated', 5))
+        verify(_G.NotificationService.ShowReturnToHospitalMessage('return_to_hospital_sub_end_level translated'))
     end)
     
     it('handlePatientPickUps - ped in distance - does not display return to hospital message when not full and there are more peds', function()
@@ -923,26 +937,24 @@ describe('client - main', function()
         verify(_G.Peds.EnterVehicle('ped model', 'vehicleObject', 1))
         verify(_G.Wrapper.PlaySoundFrontend(-1, 'AudioName added', 'AudioRef added', 1))
         verify(_G.Overlay.Update(any()))
-        verifyNoCall(_G.Scaleform.ShowMessage('return_to_hospital_header translated', 'return_to_hospital_sub_end_level translated', 5))
+        verifyNoCall(_G.NotificationService.ShowReturnToHospital(any()))
     end)
 
     it('setupLevel creates level-appropriate number of peds - level 1', function()
         gameData.level = 1
         when(_G.Peds.CreateRandomPedInArea(any(), any())).thenAnswer('pedObject')
-        when(_G.Wrapper._('start_level_header', 1)).thenAnswer('level header translated')
         when(_G.Wrapper._('start_level_sub_one')).thenAnswer('submessage translated')
 
         setupLevel()
 
         assert.equals(1, #gameData.peds)
         assert.equals('pedObject', gameData.peds[1])
-        verify(_G.Scaleform.ShowMessage('level header translated', 'submessage translated', 5))
+        verify(_G.NotificationService.ShowLevelStartedMessage('submessage translated'))
     end)
 
     it('setupLevel creates level-appropriate number of peds - level 3', function()
         gameData.level = 3
         when(_G.Peds.CreateRandomPedInArea(any(), any())).thenAnswer('pedObject')
-        when(_G.Wrapper._('start_level_header', 3)).thenAnswer('level header translated')
         when(_G.Wrapper._('start_level_sub_multi', 3)).thenAnswer('submessage translated')
 
         setupLevel()
@@ -951,7 +963,7 @@ describe('client - main', function()
         assert.equals('pedObject', gameData.peds[1])
         assert.equals('pedObject', gameData.peds[2])
         assert.equals('pedObject', gameData.peds[3])
-        verify(_G.Scaleform.ShowMessage('level header translated', 'submessage translated', 5))
+        verify(_G.NotificationService.ShowLevelStartedMessage('submessage translated'))
     end)
 
     it('getDistance creates vector and calls native', function()
@@ -975,7 +987,7 @@ describe('client - main', function()
         local loop = coroutine.create(function() displayMessageAndWaitUntilStopped('message') end)
         iterateLoop(loop)
 
-        verify(esx.ShowNotification('message translated'))
+        verify(_G.NotificationService.ShowToastNotification('message translated'))
         assert.equals('suspended', coroutine.status(loop))
 
         iterateLoop(loop)
@@ -997,7 +1009,7 @@ describe('client - main', function()
         local loop = coroutine.create(function() displayMessageAndWaitUntilStopped('message') end)
         iterateLoop(loop)
 
-        verifyNoCall(esx.ShowNotification('message translated'))
+        verifyNoCall(_G.NotificationService.ShowToastNotification(any()))
         assert.equals('dead', coroutine.status(loop))
     end)
 
@@ -1044,10 +1056,18 @@ describe('client - main', function()
         verify(_G.Markers.SetShowHospital(true))
     end)
 
-    it('playSound calls native', function()
+    it('playSound calls native when Config.RpMode is false', function()
         playSound(_G.Config.Sounds.timeRemoved)
 
         verify(_G.Wrapper.PlaySoundFrontend(-1, 'AudioName', 'AudioRef', 1))
+    end)
+
+    it('playSound does not calls native when Config.RpMode is true', function()
+        _G.Config.RpMode = true
+
+        playSound(_G.Config.Sounds.timeRemoved)
+
+        verifyNoCall(_G.Wrapper.PlaySoundFrontend(-1, 'AudioName', 'AudioRef', 1))
     end)
 
     function iterateLoop(loop)

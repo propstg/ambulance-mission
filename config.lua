@@ -30,6 +30,8 @@ Config.Markers = {
     Size = 10.0,
 }
 
+Config.RpMode = false -- Enabling turns sound effects off and removes arcade-style UI elements
+
 Config.Sounds = {
     failedMission = {
         audioRef = 'MissionFailedSounds', 
