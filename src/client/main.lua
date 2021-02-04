@@ -322,11 +322,17 @@ function handlePatientDropOff()
             Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_finished'), false)
         else
             playSound(Config.Sounds.timeAdded)
-            gameData.level = gameData.level + 1
+            incrementLevelIfNeeded()
             setupLevel()
         end
     else
         addTime(Config.Formulas.additionalTimeForDropOff(numberDroppedOff))
+    end
+end
+
+function incrementLevelIfNeeded()
+    if not Config.ContinuousMode then
+        gameData.level = gameData.level + 1
     end
 end
 
@@ -417,15 +423,22 @@ function setupLevel()
 
     updateMarkersAndBlips()
 
+    showSetupLevelMessageIfNeeded()
+    gameData.isSettingUpLevel = false
+end
+
+function showSetupLevelMessageIfNeeded()
+    if Config.ContinuousMode then
+        return
+    end
+
     local subMessage
     if gameData.level == 1 then
         subMessage = Wrapper._('start_level_sub_one')
     else
         subMessage = Wrapper._('start_level_sub_multi', gameData.level)
     end
-
     NotificationService.ShowLevelStartedMessage(subMessage)
-    gameData.isSettingUpLevel = false
 end
 
 function getDistance(coords1, coords2)

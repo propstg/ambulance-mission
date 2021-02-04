@@ -31,6 +31,7 @@ Config.Markers = {
 }
 
 Config.RpMode = false -- Enabling turns sound effects off and removes arcade-style UI elements
+Config.ContinuousMode = false -- Enabling will lock mode to level 1 and continuously spawn a new ped after returning previous ped until game is manually exited
 
 Config.Sounds = {
     failedMission = {

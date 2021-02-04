@@ -786,6 +786,28 @@ describe('client - main', function()
         verify(_G.NotificationService.ShowMoneyAddedMessage(5))
     end)
 
+    it('handlePatientDropOff - no more peds - starts new level but does not advance level counter when Config.ContinuousMode is true', function()
+        _G.Config.ContinuousMode = true
+        playerData.vehicle = 'vehicleObject'
+        gameData.isPlaying = true
+        gameData.pedsInAmbulance = { {model = 'model 1', isSpawned = true} }
+        gameData.peds = {}
+        gameData.secondsLeft = 10
+        gameData.level = 1
+        _G.Config.MaxLevels = 5
+        _G.Config.Formulas.moneyPerLevel = function() return 5 end
+        when(_G.Wrapper.IsVehicleStopped('vehicleObject')).thenAnswer(true)
+
+        handlePatientDropOff()
+
+        assert.equals(0, #gameData.pedsInAmbulance)
+        assert.equals(1, gameData.level)
+        verify(_G.Peds.DeletePeds({'model 1'}))
+        verify(_G.Wrapper.TriggerServerEvent('blargleambulance:finishLevel', 1))
+        verify(_G.Wrapper.PlaySoundFrontend(-1, 'AudioName added', 'AudioRef added', 1))
+        verify(_G.NotificationService.ShowMoneyAddedMessage(5))
+    end)
+
     it('handlePatientDropOff - calls server patientDelivered stub', function()
         playerData.vehicle = 'vehicleObject'
         gameData.isPlaying = true
@@ -984,6 +1006,24 @@ describe('client - main', function()
         assert.equals('pedObject', gameData.peds[2])
         assert.equals('pedObject', gameData.peds[3])
         verify(_G.NotificationService.ShowLevelStartedMessage('submessage translated'))
+    end)
+
+    it('setupLevel shows notification when Config.ContinuousMode false', function()
+        gameData.level = 3
+        when(_G.Wrapper._('start_level_sub_multi', 3)).thenAnswer('submessage translated')
+
+        setupLevel()
+
+        verify(_G.NotificationService.ShowLevelStartedMessage('submessage translated'))
+    end)
+
+    it('setupLevel does not show notification when Config.ContinuousMode true', function()
+        _G.Config.ContinuousMode = true
+        gameData.level = 1
+
+        setupLevel()
+
+        verifyNoCall(_G.NotificationService.ShowLevelStartedMessage(any()))
     end)
 
     it('getDistance creates vector and calls native', function()
