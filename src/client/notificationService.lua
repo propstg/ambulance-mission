@@ -44,6 +44,14 @@ function NotificationService.ShowRemoveTime(timeToAdd)
     end
 end
 
+function NotificationService.ShowContinuousLevelStartedMessage()
+    if Config.RpMode then
+        NotificationService.ShowToastNotification(Wrapper._('start_level_sub_one'))
+    else
+        NotificationService.ShowLevelStartedMessage(Wrapper._('continuous'), Wrapper._('start_level_sub_one'))
+    end
+end
+
 function NotificationService.ShowLevelStartedMessage(level, formattedLevelMessageFragment)
     if Config.RpMode then
         NotificationService.ShowToastNotification(

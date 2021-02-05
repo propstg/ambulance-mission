@@ -1,4 +1,4 @@
-local ESX = nil
+ESX = nil
 
 local TERMINATE_GAME_EVENT = 'blargleambulance:terminateGame'
 local START_GAME_EVENT = 'blargleambulance:startGame'
@@ -423,12 +423,13 @@ function setupLevel()
 
     updateMarkersAndBlips()
 
-    showSetupLevelMessageIfNeeded()
+    showSetupLevelMessage()
     gameData.isSettingUpLevel = false
 end
 
-function showSetupLevelMessageIfNeeded()
+function showSetupLevelMessage()
     if Config.ContinuousMode then
+        NotificationService.ShowContinuousLevelStartedMessage()
         return
     end
 
@@ -438,7 +439,7 @@ function showSetupLevelMessageIfNeeded()
     else
         subMessage = Wrapper._('start_level_sub_multi', gameData.level)
     end
-    NotificationService.ShowLevelStartedMessage(subMessage)
+    NotificationService.ShowLevelStartedMessage(gameData.level, subMessage)
 end
 
 function getDistance(coords1, coords2)

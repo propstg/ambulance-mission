@@ -5,6 +5,7 @@ Locales['fr'] = {
     ['start_level_header_toast'] =          'Niveau %s - %s',
     ['start_level_sub_one'] =               'Récupérez un patient et amenez-le à l\'hôpital',
     ['start_level_sub_multi'] =             'Récupérez %s patients et amenez-les à l\'hôpital',
+    ['continuous'] =                        'Continu',
     ['time_added'] =                        '%+d s',
     ['terminate_failed_scale'] =            '~r~Mission échouée',
     ['terminate_failed_toast'] =            'Mission échouée - %s',

@@ -991,7 +991,7 @@ describe('client - main', function()
 
         assert.equals(1, #gameData.peds)
         assert.equals('pedObject', gameData.peds[1])
-        verify(_G.NotificationService.ShowLevelStartedMessage('submessage translated'))
+        verify(_G.NotificationService.ShowLevelStartedMessage(1, 'submessage translated'))
     end)
 
     it('setupLevel creates level-appropriate number of peds - level 3', function()
@@ -1005,7 +1005,7 @@ describe('client - main', function()
         assert.equals('pedObject', gameData.peds[1])
         assert.equals('pedObject', gameData.peds[2])
         assert.equals('pedObject', gameData.peds[3])
-        verify(_G.NotificationService.ShowLevelStartedMessage('submessage translated'))
+        verify(_G.NotificationService.ShowLevelStartedMessage(3, 'submessage translated'))
     end)
 
     it('setupLevel shows notification when Config.ContinuousMode false', function()
@@ -1014,16 +1014,17 @@ describe('client - main', function()
 
         setupLevel()
 
-        verify(_G.NotificationService.ShowLevelStartedMessage('submessage translated'))
+        verify(_G.NotificationService.ShowLevelStartedMessage(3, 'submessage translated'))
     end)
 
-    it('setupLevel does not show notification when Config.ContinuousMode true', function()
+    it('setupLevel shows continuous notification when Config.ContinuousMode true', function()
         _G.Config.ContinuousMode = true
         gameData.level = 1
 
         setupLevel()
 
         verifyNoCall(_G.NotificationService.ShowLevelStartedMessage(any()))
+        verify(_G.NotificationService.ShowContinuousLevelStartedMessage())
     end)
 
     it('getDistance creates vector and calls native', function()

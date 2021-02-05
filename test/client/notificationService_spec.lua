@@ -161,28 +161,54 @@ describe('NotificationService', function()
         end)
     end)
 
-    describe('ShowLevelStartedMessage', function()
+    describe('ShowContinuousLevelStartedMessage', function()
         before_each(function()
             when(_G.Wrapper._('start_level_header_toast', any(), any())).thenAnswer('test level header toast')
-            when(_G.Wrapper._('start_level_header_toast', any())).thenAnswer('test level header scale')
+            when(_G.Wrapper._('start_level_header_scale', any())).thenAnswer('test level header scale')
+            when(_G.Wrapper._('start_level_sub_one')).thenAnswer('pick up patient')
         end)
 
-        it('should not show scaleform when Config.RpMode is true', function()
+        it('should show toast when Config.RpMode is true', function()
             _G.Config.RpMode = true
 
-            NotificationService.ShowLevelStartedMessage('message fragment')
+            NotificationService.ShowContinuousLevelStartedMessage()
 
             verifyNoCall(_G.Scaleform.ShowMessage(any(), any(), any()))
-            verify(_G.ESX.ShowNotification(any()))
+            verify(_G.ESX.ShowNotification('pick up patient'))
         end)
 
         it('should show scaleform when not Config.RpMode is false', function()
             _G.Config.RpMode = false
 
-            NotificationService.ShowLevelStartedMessage('message fragment')
+            NotificationService.ShowContinuousLevelStartedMessage()
 
             verify(_G.Scaleform.ShowMessage('test level header scale', 'message fragment', 5))
-            verifyNoCall(_G.ESX.ShowNotification(''))
+            verifyNoCall(_G.ESX.ShowNotification(any()))
+        end)
+    end)
+
+    describe('ShowLevelStartedMessage', function()
+        before_each(function()
+            when(_G.Wrapper._('start_level_header_toast', any(), any())).thenAnswer('test level header toast')
+            when(_G.Wrapper._('start_level_header_scale', any())).thenAnswer('test level header scale')
+        end)
+
+        it('should show toast when Config.RpMode is true', function()
+            _G.Config.RpMode = true
+
+            NotificationService.ShowLevelStartedMessage(3, 'message fragment')
+
+            verifyNoCall(_G.Scaleform.ShowMessage(any(), any(), any()))
+            verify(_G.ESX.ShowNotification('test level header toast'))
+        end)
+
+        it('should show scaleform when not Config.RpMode is false', function()
+            _G.Config.RpMode = false
+
+            NotificationService.ShowLevelStartedMessage(3, 'message fragment')
+
+            verify(_G.Scaleform.ShowMessage('test level header scale', 'message fragment', 5))
+            verifyNoCall(_G.ESX.ShowNotification(any()))
         end)
     end)
 end)
