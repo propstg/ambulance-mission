@@ -11,13 +11,21 @@ printf '\n======================================================================
 printf 'Unit tests'
 printf '\n==============================================================================\n'
 busted --coverage test/ || abort "unit tests failed"
+cat luacov.stats.out
 
 printf '\n==============================================================================\n'
 printf 'Luacheck'
 printf '\n==============================================================================\n'
 luacheck src || abort "linting failed"
 
-luacov src/
+luacov -h
+
+echo $(pwd)/src/
+
+luacov $(pwd)/src/
+
+cat luacov.report.out
+
 printf '\n==============================================================================\n'
 printf 'Coverage '
 awk '/Summary/,/Total/' luacov.report.out
