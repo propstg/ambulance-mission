@@ -23,7 +23,7 @@ describe('client - scaleform', function()
     end)
 
     it('ShowPassed', function()
-        when(_G.Wrapper._('terminate_won')).thenAnswer('terminate_won translated')
+        when(_G.Wrapper._('terminate_won_scale')).thenAnswer('terminate_won translated')
         when(_G.Wrapper.RequestScaleformMovie('MP_BIG_MESSAGE_FREEMODE')).thenAnswer('scaleformObject')
         when(_G.Wrapper.HasScaleformMovieLoaded('scaleformObject')).thenAnswer(true)
         
@@ -109,5 +109,16 @@ describe('client - scaleform', function()
         verify(_G.Wrapper.PushScaleformMovieMethodParameterBool(false))
         verify(_G.Wrapper.EndScaleformMovieMethod())
         verify(_G.Wrapper.DrawScaleformMovieFullscreen('scaleformObject', 255, 255, 255, 255))
+    end)
+
+    it('ShowAddMoney', function()
+        local moneyArgument = nil
+        function Scaleform.showCountDown(money)
+            moneyArgument = money
+        end
+
+        Scaleform.ShowAddMoney(5)
+
+        assert.is_equal(5, moneyArgument)
     end)
 end)

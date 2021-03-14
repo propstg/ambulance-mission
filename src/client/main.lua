@@ -1,8 +1,9 @@
-local ESX = nil
+ESX = nil
 
 local TERMINATE_GAME_EVENT = 'blargleambulance:terminateGame'
 local START_GAME_EVENT = 'blargleambulance:startGame'
 local SERVER_EVENT = 'blargleambulance:finishLevel'
+local SERVER_PATIENTS_DELIVERED_EVENT = 'blargleambulance:patientsDelivered'
 
 playerData = {
     ped = nil,
@@ -210,10 +211,10 @@ end
 
 function terminateGame(reasonForTerminating, failed)
     if failed then
-        Scaleform.ShowWasted(Wrapper._('terminate_failed'), reasonForTerminating, 5)
+        NotificationService.ShowGameFailedMessage(reasonForTerminating)
         playSound(Config.Sounds.failedMission)
     else
-        Scaleform.ShowPassed()
+        NotificationService.ShowGameWonMessage()
         playSound(Config.Sounds.passedMission)
     end
 
@@ -226,6 +227,7 @@ function terminateGame(reasonForTerminating, failed)
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
 end
 Wrapper.AddEventHandler(TERMINATE_GAME_EVENT, terminateGame)
+Wrapper.RegisterNetEvent(TERMINATE_GAME_EVENT)
 
 function startGame()
     gameData.hospitalLocation = findNearestHospital(playerData.position)
@@ -243,7 +245,7 @@ function startGame()
     Blips.StartBlips(gameData.hospitalLocation)
     setupLevel()
     startGameLoop()
-    startTimerThread()
+    startTimerThreadIfNeeded()
 end
 Wrapper.AddEventHandler(START_GAME_EVENT, startGame)
 
@@ -264,8 +266,10 @@ function findNearestHospital(playerPosition)
     return coordsOfNearest
 end
 
-function startTimerThread()
-    Citizen.CreateThread(timerLoop)
+function startTimerThreadIfNeeded()
+    if not Config.RpMode then
+        Citizen.CreateThread(timerLoop)
+    end
 end
 
 function timerLoop()
@@ -303,6 +307,7 @@ function handlePatientDropOff()
 
     gameData.isCurrentlyUnloadingPeds = true
     local numberDroppedOff = #gameData.pedsInAmbulance
+    Wrapper.TriggerServerEvent(SERVER_PATIENTS_DELIVERED_EVENT, numberDroppedOff)
     Peds.DeletePeds(mapPedsToModel(gameData.pedsInAmbulance))
     gameData.pedsInAmbulance = {}
     updateMarkersAndBlips()
@@ -311,17 +316,23 @@ function handlePatientDropOff()
     if #gameData.peds == 0 then
         gameData.secondsLeft = Config.InitialSeconds
         Wrapper.TriggerServerEvent(SERVER_EVENT, gameData.level)
-        Scaleform.ShowAddMoney(Wrapper._('add_money', Config.Formulas.moneyPerLevel(gameData.level)))
+        NotificationService.ShowMoneyAddedMessage(Config.Formulas.moneyPerLevel(gameData.level))
 
         if gameData.level == Config.MaxLevels then
             Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_finished'), false)
         else
             playSound(Config.Sounds.timeAdded)
-            gameData.level = gameData.level + 1
+            incrementLevelIfNeeded()
             setupLevel()
         end
     else
         addTime(Config.Formulas.additionalTimeForDropOff(numberDroppedOff))
+    end
+end
+
+function incrementLevelIfNeeded()
+    if not Config.ContinuousMode then
+        gameData.level = gameData.level + 1
     end
 end
 
@@ -348,11 +359,9 @@ function handlePatientPickUps()
             Overlay.Update(gameData)
 
             if #gameData.pedsInAmbulance >= gameData.maxPatientsPerTrip then
-                Scaleform.ShowMessage(Wrapper._('return_to_hospital_header'),
-                    Wrapper._('return_to_hospital_sub_full'), 5)
+                NotificationService.ShowReturnToHospitalMessage(Wrapper._('return_to_hospital_sub_full'))
             elseif #gameData.peds == 0 then
-                Scaleform.ShowMessage(Wrapper._('return_to_hospital_header'),
-                    Wrapper._('return_to_hospital_sub_end_level'), 5)
+                NotificationService.ShowReturnToHospitalMessage(Wrapper._('return_to_hospital_sub_end_level'))
             end
 
             return
@@ -377,10 +386,10 @@ function addTime(timeToAdd)
     gameData.secondsLeft = gameData.secondsLeft + timeToAdd
 
     if timeToAdd > 0 then
-        Scaleform.ShowAddTime(Wrapper._('time_added', timeToAdd))
+        NotificationService.ShowAddTime(timeToAdd)
         playSound(Config.Sounds.timeAdded)
     elseif timeToAdd < 0 then
-        Scaleform.ShowRemoveTime(Wrapper._('time_added', timeToAdd))
+        NotificationService.ShowRemoveTime(timeToAdd)
         playSound(Config.Sounds.timeRemoved)
     end
 end
@@ -414,15 +423,23 @@ function setupLevel()
 
     updateMarkersAndBlips()
 
+    showSetupLevelMessage()
+    gameData.isSettingUpLevel = false
+end
+
+function showSetupLevelMessage()
+    if Config.ContinuousMode then
+        NotificationService.ShowContinuousLevelStartedMessage()
+        return
+    end
+
     local subMessage
     if gameData.level == 1 then
         subMessage = Wrapper._('start_level_sub_one')
     else
         subMessage = Wrapper._('start_level_sub_multi', gameData.level)
     end
-
-    Scaleform.ShowMessage(Wrapper._('start_level_header', gameData.level), subMessage, 5)
-    gameData.isSettingUpLevel = false
+    NotificationService.ShowLevelStartedMessage(gameData.level, subMessage)
 end
 
 function getDistance(coords1, coords2)
@@ -432,7 +449,7 @@ end
 
 function displayMessageAndWaitUntilStopped(notificationMessage)
     while gameData.isPlaying and not Wrapper.IsVehicleStopped(playerData.vehicle) do
-        ESX.ShowNotification(Wrapper._(notificationMessage))
+        NotificationService.ShowToastNotification(Wrapper._(notificationMessage))
         Citizen.Wait(50)
     end
 end
@@ -461,7 +478,9 @@ function updateMarkersAndBlips()
 end
 
 function playSound(sound)
-    Wrapper.PlaySoundFrontend(-1, sound.audioName, sound.audioRef, 1)
+    if not Config.RpMode then
+        Wrapper.PlaySoundFrontend(-1, sound.audioName, sound.audioRef, 1)
+    end
 end
 
 function setEsx(obj)

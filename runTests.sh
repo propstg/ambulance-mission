@@ -17,7 +17,7 @@ printf 'Luacheck'
 printf '\n==============================================================================\n'
 luacheck src || abort "linting failed"
 
-luacov src/
+luacov ./src/
 printf '\n==============================================================================\n'
 printf 'Coverage '
 awk '/Summary/,/Total/' luacov.report.out

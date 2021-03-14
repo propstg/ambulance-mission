@@ -27,6 +27,7 @@ client_scripts {
     'src/client/markers.lua',
     'src/client/peds.lua',
     'src/client/overlay.lua',
+    'src/client/notificationService.lua',
     'src/client/scaleform.lua',
     'src/client/main.lua'
 }
