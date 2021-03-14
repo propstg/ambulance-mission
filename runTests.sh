@@ -10,6 +10,7 @@ rm -rf luacov.report.out luacov.stats.out
 printf '\n==============================================================================\n'
 printf 'Unit tests'
 printf '\n==============================================================================\n'
+busted --version
 busted --coverage test/ || abort "unit tests failed"
 cat luacov.stats.out
 
