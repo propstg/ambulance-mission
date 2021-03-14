@@ -10,5 +10,6 @@ end)
 Wrapper.RegisterNetEvent('blargleambulance:patientsDelivered')
 --luacheck: no unused args
 Wrapper.AddEventHandler('blargleambulance:patientsDelivered', function(numberOfPatients)
-    -- Add custom code here. Trigger client event blargleambulance:terminateGame('reason') if needed
+    -- Add custom code here. Trigger client event "blargleambulance:terminateGame" to end the game, if needed
+    -- example: TriggerClientEvent("blargleambulance:terminateGame", source, "reason")
 end)
