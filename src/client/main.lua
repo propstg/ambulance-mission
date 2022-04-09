@@ -34,7 +34,6 @@ Citizen.CreateThread(function()
     registerJobChangeListener()
 
     Overlay.Init()
-    startControlLoop()
     mainLoop()
 end)
 
@@ -77,32 +76,18 @@ function setPlayerJob(job)
     playerData.job = job.name
 end
 
-function startControlLoop()
-    Citizen.CreateThread(controlLoop)
-end
-
-function controlLoop()
-    while true do
-        if not canUserPlay() then
-            Citizen.Wait(1000)
-        elseif Wrapper.IsControlJustPressed(1, Config.ActivationKey) then
-            handleControlJustPressed()
+RegisterCommand("ambulance", function()
+    if canUserPlay() then
+        if gameData.isPlaying then
+            Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_requested'), true)
+            Citizen.Wait(5000)
+        elseif playerData.isInAmbulance then
+            Wrapper.TriggerEvent(START_GAME_EVENT)
+            ESX.ShowHelpNotification(Wrapper._('stop_game_help'))
+            Citizen.Wait(5000)
         end
-
-        Citizen.Wait(5)
     end
-end
-
-function handleControlJustPressed()
-    if gameData.isPlaying then
-        Wrapper.TriggerEvent(TERMINATE_GAME_EVENT, Wrapper._('terminate_requested'), true)
-        Citizen.Wait(5000)
-    elseif playerData.isInAmbulance then
-        Wrapper.TriggerEvent(START_GAME_EVENT)
-        ESX.ShowHelpNotification(Wrapper._('stop_game_help'))
-        Citizen.Wait(5000)
-    end
-end
+end)
 
 function mainLoop()
     while true do
